@@ -1,10 +1,11 @@
+:- include('game.pl').
+
 startGame :-
-initialBoard(X),
-printBoard(X).
+initialBoard(Board),
+
+play(Board).
 
 initialBoard([
-[30, 31, 32, 33, 34, 35, 36, 37],
-[40, 41, 42, 43, 44, 45, 46, 47],
 [00, 24, 23, 00, 23, 24, 00],
 [00, 00, 22, 23, 22, 00, 00],
 [00, 00, 00, 00, 00, 00, 00],
@@ -154,16 +155,10 @@ translateCellInt(Cell) :-
 write(Cell).
 
 
-translateCell(00) :-
-write('   ').
-
 translateCell(12) :-
 write('  o').
 
 translateCell(13) :-
-write('o o').
-
-translateCell(14) :-
 write('o o').
 
 translateCell(22) :-
@@ -171,12 +166,6 @@ write('  +').
 
 translateCell(23) :-
 write(' + ').
-
-translateCell(24) :-
-write('+ +').
-
-translateCell(30) :-
-write('x x').
 
 translateCell(31) :-
 put_code(8593),
@@ -250,7 +239,7 @@ translateCell(47) :-
 write('xxx').
 
 translateCell(Cell) :-
-write(Cell).
+translateCellInt(Cell).
 
 
 movePiece(X1, Y1, X2, Y2, _Board) :-
