@@ -4,238 +4,269 @@ initialBoard([
 [00, 24, 23, 00, 23, 24, 00],
 [00, 00, 22, 23, 22, 00, 00],
 [00, 00, 00, 00, 00, 00, 00],
-[00, 30, 00, 00, 00, 30, 00],
-[30, 00, 30, 00, 30, 00, 30],
-[00, 30, 00, 00, 00, 30, 00],
+[00, 40, 41, 42, 43, 31, 00],
+[35, 00, 36, 37, 32, 00, 33],
+[00, 44, 45, 46, 47, 34, 00],
 [00, 00, 00, 00, 00, 00, 00],
 [00, 00, 12, 13, 12, 00, 00],
 [00, 14, 13, 00, 13, 14, 00]]).
 
 printBoard(Board) :-
 cls,
+printCoordsX,
 printBlackLine,
-printRowByRow(Board).
+printRowByRow(Board, 1).
+
+printCoordsX :-
+nl,
+write(' |'),
+write('  1  '),
+write('|'),
+write('  2  '),
+write('|'),
+write('  3  '),
+write('|'),
+write('  4  '),
+write('|'),
+write('  5  '),
+write('|'),
+write('  6  '),
+write('|'),
+write('  7  '),
+write('|'),
+nl.
 
 printBlackLine :-
-write('-----------------------------'),
+write('--------------------------------------------'),
 nl.
 
-printRowByRow([]).
-printRowByRow([Line|Rest]) :-
+printRowByRow([], N).
+printRowByRow([Line|Rest], N) :-
+write(' |'),
+printSingleRowFirst(Line),
+write(N),
 write('|'),
-printSingleRowInt(Line),
-write('|'),
-printSingleRow(Line),
-printRowByRow(Rest).
+printSingleRowSecond(Line),
+write(' |'),
+printSingleRowThird(Line),
+N1 is N+1,
+printRowByRow(Rest, N1).
 
-printSingleRowInt([Cell]):-
-translateCellInt(Cell),
+printSingleRowFirst([Cell]):-
+translateCellFirst(Cell),
 write('|'),
 nl.
 
-printSingleRowInt([Cell|More]):-
-translateCellInt(Cell),
+printSingleRowFirst([Cell|More]):-
+translateCellFirst(Cell),
 write('|'),
-printSingleRowInt(More).
+printSingleRowFirst(More).
 
 
-printSingleRow([Cell]):-
-translateCell(Cell),
+printSingleRowSecond([Cell]):-
+translateCellSecond(Cell),
+write('|'),
+nl.
+
+printSingleRowSecond([Cell|More]):-
+translateCellSecond(Cell),
+write('|'),
+printSingleRowSecond(More).
+
+
+printSingleRowThird([Cell]):-
+translateCellThird(Cell),
 write('|'),
 nl,
 printBlackLine.
 
-
-printSingleRow([Cell|More]):-
-translateCell(Cell),
+printSingleRowThird([Cell|More]):-
+translateCellThird(Cell),
 write('|'),
-printSingleRow(More).
+printSingleRowThird(More).
 
 
-translateCellInt(00) :-
-write('   ').
+translateCellFirst(00) :-
+write('     ').
 
-translateCellInt(12) :-
-write('o  ').
+translateCellFirst(12) :-
+write('o    ').
 
-translateCellInt(13) :-
-write(' o ').
+translateCellFirst(13) :-
+write('  o  ').
 
-translateCellInt(14) :-
-write('o o').
+translateCellFirst(14) :-
+write('o - o').
 
-translateCellInt(22) :-
-write('+  ').
+translateCellFirst(22) :-
+write('+    ').
 
-translateCellInt(23) :-
-write('+ +').
+translateCellFirst(23) :-
+write('+ - +').
 
-translateCellInt(24) :-
-write('+ +').
+translateCellFirst(24) :-
+write('+ - +').
 
-translateCellInt(30) :-
-write('x x').
+translateCellFirst(30) :-
+write('x x x').
 
-translateCellInt(31) :-
-put_code(8593),
-write(' '),
-put_code(8593).
+translateCellFirst(31) :-
+write('^ ^ ^').
 
-translateCellInt(32) :-
-put_code(8594),
-write(' '),
-put_code(8594).
+translateCellFirst(32) :-
+write('---->').
 
-translateCellInt(33) :-
-put_code(8595),
-write(' '),
-put_code(8595).
+translateCellFirst(33) :-
+write('<----').
 
-translateCellInt(34) :-
-put_code(8592),
-write(' '),
-put_code(8592).
+translateCellFirst(34) :-
+write('| | |').
 
-translateCellInt(35) :-
-put_code(8597),
-write(' '),
-put_code(8597).
+translateCellFirst(35) :-
+write('^ ^ ^').
 
-translateCellInt(36) :-
-put_code(8596),
-write(' '),
-put_code(8596).
+translateCellFirst(36) :-
+write('<--->').
 
-translateCellInt(37) :-
-write('xxx').
+translateCellFirst(37) :-
+write('  ^  ').
 
-translateCellInt(40) :-
-put_code(8625),
-write(' '),
-put_code(8625).
+translateCellFirst(40) :-
+write('+--->').
 
-translateCellInt(41) :-
-put_code(11022),
-write(' '),
-put_code(11022).
+translateCellFirst(41) :-
+write('----+').
 
-translateCellInt(42) :-
-put_code(8594),
-write(' '),
-put_code(8594).
+translateCellFirst(42) :-
+write('  | |').
 
-translateCellInt(43) :-
-put_code(8595),
-write(' '),
-put_code(8595).
+translateCellFirst(43) :-
+write('^ ^  ').
 
-translateCellInt(44) :-
-put_code(8592),
-write(' '),
-put_code(8592).
+translateCellFirst(44) :-
+write('<---+').
 
-translateCellInt(45) :-
-put_code(8597),
-write(' '),
-put_code(8597).
+translateCellFirst(45) :-
+write('+----').
 
-translateCellInt(46) :-
-put_code(8596),
-write(' '),
-put_code(8596).
+translateCellFirst(46) :-
+write('| |  ').
 
-translateCellInt(47) :-
-write('xxx').
+translateCellFirst(47) :-
+write('  ^ ^').
 
-translateCellInt(Cell) :-
+translateCellFirst(Cell) :-
 write(Cell).
 
 
-translateCell(12) :-
-write('  o').
+translateCellSecond(12) :-
+write('  \\  ').
 
-translateCell(13) :-
-write('o o').
+translateCellSecond(13) :-
+write(' / \\ ').
 
-translateCell(22) :-
-write('  +').
+translateCellSecond(14) :-
+write('|   |').
 
-translateCell(23) :-
-write(' + ').
+translateCellSecond(22) :-
+write('  \\  ').
 
-translateCell(31) :-
-put_code(8593),
-write(' '),
-put_code(8593).
+translateCellSecond(23) :-
+write(' \\ / ').
 
-translateCell(32) :-
-put_code(8594),
-write(' '),
-put_code(8594).
+translateCellSecond(24) :-
+write('|   |').
 
-translateCell(33) :-
-put_code(8595),
-write(' '),
-put_code(8595).
+translateCellSecond(31) :-
+write('| | |').
 
-translateCell(34) :-
-put_code(8592),
-write(' '),
-put_code(8592).
+translateCellSecond(34) :-
+write('| | |').
 
-translateCell(35) :-
-put_code(8597),
-write(' '),
-put_code(8597).
+translateCellSecond(35) :-
+write('| | |').
 
-translateCell(36) :-
-put_code(8596),
-write(' '),
-put_code(8596).
+translateCellSecond(37) :-
+write('< + >').
 
-translateCell(37) :-
-write('xxx').
+translateCellSecond(40) :-
+write('| +->').
 
-translateCell(40) :-
-put_code(8625),
-write(' '),
-put_code(8625).
+translateCellSecond(41) :-
+write('--+ |').
 
-translateCell(41) :-
-put_code(11022),
-write(' '),
-put_code(11022).
+translateCellSecond(42) :-
+write('<-+ |').
 
-translateCell(42) :-
-put_code(8594),
-write(' '),
-put_code(8594).
+translateCellSecond(43) :-
+write('| +--').
 
-translateCell(43) :-
-put_code(8595),
-write(' '),
-put_code(8595).
+translateCellSecond(44) :-
+write('<-+ |').
 
-translateCell(44) :-
-put_code(8592),
-write(' '),
-put_code(8592).
+translateCellSecond(45) :-
+write('| +--').
 
-translateCell(45) :-
-put_code(8597),
-write(' '),
-put_code(8597).
+translateCellSecond(46) :-
+write('| +->').
 
-translateCell(46) :-
-put_code(8596),
-write(' '),
-put_code(8596).
+translateCellSecond(47) :-
+write('--+ |').
 
-translateCell(47) :-
-write('xxx').
+translateCellSecond(Cell) :-
+translateCellFirst(Cell).
 
-translateCell(Cell) :-
-translateCellInt(Cell).
+
+translateCellThird(12) :-
+write('    o').
+
+translateCellThird(13) :-
+write('o - o').
+
+translateCellThird(22) :-
+write('    +').
+
+translateCellThird(23) :-
+write('  +  ').
+
+translateCellThird(31) :-
+write('| | |').
+
+translateCellThird(34) :-
+write('v v v').
+
+translateCellThird(35) :-
+write('v v v').
+
+translateCellThird(37) :-
+write('  v  ').
+
+translateCellThird(40) :-
+write('| |  ').
+
+translateCellThird(41) :-
+write('  v v').
+
+translateCellThird(42) :-
+write('<---+').
+
+translateCellThird(43) :-
+write('+----').
+
+translateCellThird(44) :-
+write('  | |').
+
+translateCellThird(45) :-
+write('v v  ').
+
+translateCellThird(46) :-
+write('+--->').
+
+translateCellThird(47) :-
+write('----+').
+
+translateCellThird(Cell) :-
+translateCellFirst(Cell).
 
 /*
 movePiece(X1, Y1, X2, Y2, _Board) :-
