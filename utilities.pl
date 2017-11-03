@@ -19,6 +19,10 @@ ite(If, Then, Else):- If, !, Then.
 ite(_, _, Else):- Else.
 
 % Determine if a given Play is even or odd
-even(Playe):- Play mod 2 =:= 0.
+even(Play):- Play mod 2 =:= 0.
 
 odd(Play):- Play mod 2 =:= 1.
+
+getPiece(Board, Line, Col, Piece):-
+    nth1(Line, Board, BoardLine),
+    nth1(Col, BoardLine, Piece).

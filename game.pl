@@ -67,9 +67,7 @@ readCoords(X1, Y1, X2, Y2):-
   read(X2),
   read(Y2).
 
-getElement(Board, Row, Col, Element):-
-    nth1(Row, Board, MatrixRow),
-    nth1(Col, MatrixRow, Element).
+
 
 movePiece(X1, Y1, X2, Y2, Board, NewBoard):-
     ite(savePos(X1, Y1, Piece, Board), savePos(X1, Y1, Piece, Board), write(Piece)).

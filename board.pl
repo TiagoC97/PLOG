@@ -1,6 +1,3 @@
-startGame :-
-initialBoard(Board),
-
 play(Board).
 
 initialBoard([
