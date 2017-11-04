@@ -10,7 +10,8 @@ cls :- write('\e[2J').
 
 waitNewLine:- get_code(L), ite(L == 10, !, waitNewLine).
 
-getDigit(D):- get_code(D1), D is D1 - 48, ite(D1 == 10, !, waitNewLine).
+getDigit(D):- get_code(D1), D is D1 - 48, ite(D1 == 10, !, waitNewLine), !.
+
 getChar(C):- get_char(C), char_code(C, C1), ite(C1 == 10, !, waitNewLine).
 
 % Implementation of an if statement
@@ -26,3 +27,12 @@ odd(Play):- Play mod 2 =:= 1.
 getPiece(Board, Line, Col, Piece):-
     nth1(Line, Board, BoardLine),
     nth1(Col, BoardLine, Piece).
+
+checkLine(Line):-
+  (Line >= 1, Line =< 9);
+  nl, write('WARNING! Line must be between 1 and 9!'), nl, nl, fail.
+
+checkColumn(Column):-
+  (Column >= 1, Column =< 7);
+  nl, write('WARNING! Column must be between 1 and 7!'), nl, nl,
+  write('Give the column of the new position for the piece (between 1 and 7):'), !, fail.
