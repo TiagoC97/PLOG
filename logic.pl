@@ -28,7 +28,7 @@ get_play(Board, Play, Line, Column, NewLine, NewColumn):-
     validateMove(Board, Play, Line, Column, NewLine, NewColumn),
   !.
 
-move(Board, NewBoard, Play, Line, Column, NewLine, NewColumn):- .
+move(Board, NewBoard, Play, Line, Column, NewLine, NewColumn).
 
 determinePlayer(Play):-
   ((even(Play), write('White turn!'));
@@ -71,22 +71,9 @@ validateMove(Board, Play, Line, Column, NewLine, NewColumn):-
   getPiece(Board, Line, Column, Piece),
   checkNewPosPiece(Board, NewLine, NewColumn, Play),
   getPiece(Board, NewLine, NewColumn, NewPiece),
-  verifyNewPosInRange(NewPiece)
+  verifyNewPosInRange(NewPiece, Piece, Line, Column, NewLine, NewColumn),
+  verifyPieceInTheWay(Line, Column, NewLine, NewColumn, Board).
 
-
-  ((NewPiece)
-
-  )
-  (
-    (Piece == 12,
-      (
-        (
-
-        );
-        (fail NAO É VALIDAAAAAAAAAAAAAAAAAAAAA)
-      )
-    )
-  )
 
 checkNewPosPiece(Board, NewLine, NewColumn, Play):-
   getPiece(Board, NewLine, NewColumn, NewPiece),
@@ -126,7 +113,7 @@ verifyNewPosInRange(NewPiece, Piece, Line, Column, NewLine, NewColumn):-
       ((NewColumn =:= Column + 1); (NewColumn =:= Column - 1)));
       ((NewLine =:= Line), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
       ((NewColumn =:= Column), ((NewLine =:= Line + 2); (NewLine =:= Line - 2)));
-      nl, write('WARNING! Cannot capture with short move!'), nl, nl, !, fail)) ;
+      nl, write('WARNING! Cannot capture with short move!'), nl, nl, !, fail) ;
 
   ((Piece == 13 ; Piece == 23),
       (((NewLine =:= Line + 1); (NewLine =:= Line - 1)), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
@@ -143,7 +130,8 @@ verifyNewPosInRange(NewPiece, Piece, Line, Column, NewLine, NewColumn):-
       ((NewColumn =:= Column), ((NewLine =:= Line + 4); (NewLine =:= Line - 4)));
       nl, write('WARNING! Cannot capture with short move!'), nl, nl, !, fail).
 
-auxLine(Line, Column, Board, 0).
+auxLine(Line, Column, Board, 1).
+auxLine(Line, Column, Board, -1).
 
 auxLine(Line, Column, Board, C):-
   (((C > 0), C1 is C - 1) ; ((C < 0), C1 is C + 1)) ,
@@ -151,7 +139,8 @@ auxLine(Line, Column, Board, C):-
   ((((Piece == 00) ; (Piece == 36) ; (((C > 0), (Piece == 32)) ; ((C < 0), (Piece == 33)))), auxLine(Line, Column + C1, Board, C1)) ;
   nl, write('WARNING! Something is in the way!'), nl, nl, !, fail).
 
-auxColumn(Line, Column, Board, 0).
+auxColumn(Line, Column, Board, 1).
+auxColumn(Line, Column, Board, -1).
 
 auxColumn(Line, Column, Board, C):-
     (((C > 0), C1 is C - 1) ; ((C < 0), C1 is C + 1)) ,
@@ -159,39 +148,30 @@ auxColumn(Line, Column, Board, C):-
     ((((Piece == 00) ; (Piece == 35) ; (((C > 0), (Piece == 34)) ; ((C < 0), (Piece == 31)))), auxLine(Line + C1, Column, Board, C1)) ;
     nl, write('WARNING! Something is in the way!'), nl, nl, !, fail).
 
-verifyDiagonalWay(Line, Column, Board, 0, 0).
+verifyCurve(Line, Column, Board, LineC, ColC):-
+    ((abs(LineC =:= 1)), getPiece(Board, Line, Column + ColC, Piece);
+    (abs(ColC =:= 1)), getPiece(Board, Line + LineC, Column, Piece)),
+    ((Piece == 37);
+    (Piece == 00);
+    ((LineC == 1), (ColC > 0), (Piece == 41));
+    ((LineC == 1), (ColC < 0), (Piece == 47));
+    ((LineC == -1), (ColC > 0), (Piece == 45));
+    ((LineC == -1), (ColC < 0), (Piece == 43));
+    ((LineC > 0), (ColC == 1), (Piece == 46));
+    ((LineC < 0), (ColC == 1), (Piece == 40));
+    ((LineC > 0), (ColC == -1), (Piece == 42));
+    ((LineC < 0), (ColC == -1), (Piece == 44))).
+
 
 verifyDiagonalWay(Line, Column, Board, LineC, ColC):-
-    ((LineC > 0), (ColC > 0),
-        )
+    ((ColC > 0), auxLine(Line, Column, Board, ColC), verifyCurve(Line, Column, Board, LineC, 1), auxColumn(Line, Column, Board, LineC));
+    ((LineC > 0), auxColumn(Line, Column, Board, LineC), verifyCurve(Line, Column, Board, 1, ColC), auxLine(Line, Column, Board, ColC));
+    ((ColC < 0), auxLine(Line, Column, Board, ColC), verifyCurve(Line, Column, Board, LineC, -1), auxColumn(Line, Column, Board, LineC));
+    ((LineC < 0), auxColumn(Line, Column, Board, LineC), verifyCurve(Line, Column, Board, -1, ColC), auxLine(Line, Column, Board, ColC)).
 
 
 verifyPieceInTheWay(Line, Column, NewLine, NewColumn, Board):-
-
-
-    (((Line == NewLine), abs(NewColumn - Column) > 1, auxLine(Line, Column, Board, (NewColumn - Column))) ;
-     ((Column == NewColumn), abs(NewLine - Line) > 1, auxColumn(Line, Column, Board, (NewLine - Line))) ;
+    (((Line == NewLine), auxLine(Line, Column, Board, (NewColumn - Column))) ;
+     ((Column == NewColumn), auxColumn(Line, Column, Board, (NewLine - Line))) ;
      (verifyDiagonalWay(Line, Column, Board, (NewLine - Line), (NewColumn - Column)));
-     (((abs(NewColumn - Column) == 1) , (Line == NewLine)) ; ((abs(NewLine - Line) == 1) , (Column == NewColumn)))).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  .
+     (((abs(NewColumn - Column) =:= 1) , (Line == NewLine)) ; ((abs(NewLine - Line) =:= 1) , (Column == NewColumn)))).

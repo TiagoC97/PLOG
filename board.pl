@@ -99,13 +99,13 @@ translateCellFirst(14) :-
 write('o - o').
 
 translateCellFirst(22) :-
-write('+    ').
+write('*    ').
 
 translateCellFirst(23) :-
-write('+ - +').
+write('* - *').
 
 translateCellFirst(24) :-
-write('+ - +').
+write('* - *').
 
 translateCellFirst(30) :-
 write('x x x').
@@ -224,10 +224,10 @@ translateCellThird(13) :-
 write('o - o').
 
 translateCellThird(22) :-
-write('    +').
+write('    *').
 
 translateCellThird(23) :-
-write('  +  ').
+write('  *  ').
 
 translateCellThird(31) :-
 write('| | |').
