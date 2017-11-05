@@ -36,3 +36,26 @@ checkColumn(Column):-
   (Column >= 1, Column =< 7);
   nl, write('WARNING! Column must be between 1 and 7!'), nl, nl,
   write('Give the column of the new position for the piece (between 1 and 7):'), !, fail.
+
+
+  % Faz update a Board
+  updateTo(_,[],[],_,_).
+  updateTo(ElemToChange,[[_|Xs]|Ys],[[ElemToChange|Xs1]|Ys1],1,1) :-
+                      !,updateTo(ElemToChange,[Xs|Ys],[Xs1|Ys1],0,0).
+
+  updateTo(ElemToChange,[[X]|Xs],[[X]|Xs1],0,0) :-
+                      updateTo(ElemToChange,Xs,Xs1,0,0),!.
+
+  updateTo(ElemToChange,[[X|Xs]|Ys],[[X|Xs1]|Ys1],0,0) :-
+                      updateTo(ElemToChange,[Xs|Ys],[Xs1|Ys1],0,0).
+
+  updateTo(ElemToChange,[[X|Xs]|Ys],[[X|Xs1]|Ys1],N,1) :-
+                      N1 is N-1,
+                      updateTo(ElemToChange,[Xs|Ys],[Xs1|Ys1],N1,1).
+
+  updateTo(ElemToChange,[Xs|Ys],[Xs|Ys1],N,M) :-
+                      M1 is M-1,
+                      updateTo(ElemToChange,Ys,Ys1,N,M1),!.
+
+  updateBoard(ElemToChange,Y,X,Board,NewBoard) :-
+                      updateTo(ElemToChange,Board,NewBoard,X,Y).
