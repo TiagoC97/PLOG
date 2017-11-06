@@ -1,7 +1,7 @@
 startGame :-
-initialBoard(Board),
-Play is 0,
-play_cicle(Board, Play).
+  initialBoard(Board),
+  Play is 0,
+  play_cicle(Board, Play).
 
 play_cicle(Board, Play):-
   printBoard(Board),
@@ -13,7 +13,7 @@ play(Board, NewBoard, Play):-
   repeat,
     get_play(Board, Play, Line, Column, NewLine, NewColumn),
   !,
-  move(Board, NewBoard, Play, Line, Column, NewLine, NewColumn).
+  move(Board, NewBoard, Line, Column, NewLine, NewColumn).
 
 
 
@@ -28,10 +28,27 @@ get_play(Board, Play, Line, Column, NewLine, NewColumn):-
     validateMove(Board, Play, Line, Column, NewLine, NewColumn),
   !.
 
-move(Board, NewBoard2, Play, Line, Column, NewLine, NewColumn):-
+move(Board, NewBoard2, Line, Column, NewLine, NewColumn):-
   getPiece(Board, Line, Column, Piece),
-  updateBoard(00, Line, Column, Board, NewBoard),
-  updateBoard(Piece, Line, Column, NewBoard, NewBoard2).
+  getPiece(Board, Line, Column, NewPiece),
+  updateBoard(Line, Column, 00, Board, NewBoard),
+  updateBoard(NewLine, NewColumn, Piece, NewBoard, NewBoard2),
+  ((NewPiece =\= 00), verifyTypeNewPiece(NewPiece, Board, NewBoard)).
+
+verifyTypeNewPiece(NewPiece, Board):-
+  ((((NewPiece >= 30) , (NewPiece =< 37)) ; ((NewPiece >= 40) , (NewPiece =< 47))),
+  captureBarragoon(Board, NewBoard)) ;
+  captureOponentPiece(Board, NewBoard).
+
+captureBarragoon(Board, NewBoard):-
+  repeat,
+    getBarragoonCoords(Column, Line),
+    getPiece(Board, Line, Column, Piece),
+    (Piece == 00),
+    updateBoard(Line, Column, Piece, Board, NewBoard)
+  !.
+  write('')
+
 
 determinePlayer(Play):-
   ((even(Play), write('White turn!'));
@@ -39,27 +56,42 @@ determinePlayer(Play):-
 
 getPieceCurCoords(X, Y):-
   repeat,
-    write('Give the line of the piece to move (between 1 and 9):'),
-    getDigit(Y),
-    checkLine(Y),
-  !,
-  repeat,
     write('Give the column of the piece to move (between 1 and 7):'),
     getDigit(X),
     checkColumn(X),
-  !.
-
-getPieceNewCoords(X, Y):-
+  !,
   repeat,
-    write('Give the line of the new position for the piece (between 1 and 9):'),
+    write('Give the line of the piece to move (between 1 and 9):'),
     getDigit(Y),
     checkLine(Y),
-  !,
+  !.
+
+
+getPieceNewCoords(X, Y):-
   repeat,
     write('Give the column of the new position for the piece (between 1 and 7):'),
     getDigit(X),
     checkColumn(X),
+  !,
+  repeat,
+    write('Give the line of the new position for the piece (between 1 and 9):'),
+    getDigit(Y),
+    checkLine(Y),
   !.
+
+getBarragoonCoords(X, Y):-
+  repeat,
+    write('Give the column of the new position for the barragoon piece (between 1 and 7):'),
+    getDigit(X),
+    checkColumn(X),
+  !,
+  repeat,
+    write('Give the line of the new position for the barragoon piece (between 1 and 9):'),
+    getDigit(Y),
+    checkLine(Y),
+  !.
+
+
 
 checkPieceFromCurrentPlayer(Board, Line, Column, Play):-
   getPiece(Board, Line, Column, Piece),
@@ -142,7 +174,7 @@ auxLine(Line, Column, Board, C):-
   (((C > 0), C1 is C - 1) ; ((C < 0), C1 is C + 1)) ,
   NewColumn is Column + C1,
   getPiece(Board, Line, NewColumn, Piece),
-  ((((Piece == 00) ; (Piece == 36) ; (((C > 0), (Piece == 32)) ; ((C < 0), (Piece == 33)))), auxLine(Line, NewColumn, Board, C1)) ;
+  ((((Piece == 00) ; (Piece == 36) ; (((C > 0), (Piece == 32)) ; ((C < 0), (Piece == 33)))), auxLine(Line, Column, Board, C1)) ;
   !, fail).
 
 auxColumn(Line, Column, Board, 1).
@@ -152,7 +184,7 @@ auxColumn(Line, Column, Board, C):-
     (((C > 0), C1 is C - 1) ; ((C < 0), C1 is C + 1)) ,
     NewLine is Line + C1,
     getPiece(Board, NewLine, Column, Piece),
-    ((((Piece == 00) ; (Piece == 35) ; (((C > 0), (Piece == 34)) ; ((C < 0), (Piece == 31)))), auxColumn(NewLine, Column, Board, C1)) ;
+    ((((Piece == 00) ; (Piece == 35) ; (((C > 0), (Piece == 34)) ; ((C < 0), (Piece == 31)))), auxColumn(Line, Column, Board, C1)) ;
     !, fail).
 
 verifyCurve(Line, Column, Board, LineC, ColC):-

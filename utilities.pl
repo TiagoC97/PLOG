@@ -30,14 +30,13 @@ getPiece(Board, Line, Col, Piece):-
 
 checkLine(Line):-
   (Line >= 1, Line =< 9);
-  nl, write('WARNING! Line must be between 1 and 9!'), nl, nl, fail.
+  nl, write('WARNING! Line must be between 1 and 9!'), nl, nl, !, fail.
 
 checkColumn(Column):-
   (Column >= 1, Column =< 7);
-  nl, write('WARNING! Column must be between 1 and 7!'), nl, nl,
-  write('Give the column of the new position for the piece (between 1 and 7):'), !, fail.
+  nl, write('WARNING! Column must be between 1 and 7!'), nl, nl, !, fail.
 
-
+/*
   % Faz update a Board
   updateTo(_,[],[],_,_).
   updateTo(ElemToChange,[[_|Xs]|Ys],[[ElemToChange|Xs1]|Ys1],1,1) :-
@@ -59,3 +58,20 @@ checkColumn(Column):-
 
   updateBoard(ElemToChange,Y,X,Board,NewBoard) :-
                       updateTo(ElemToChange,Board,NewBoard,X,Y).
+*/
+
+updateBoard(1, Column, Piece, [FirstLine|OtherLines], [NewFirstLine|OtherLines]):-
+	updateBoardOneList(Column, Piece, FirstLine, NewFirstLine).
+updateBoard(Line, Column, Piece, [FirstLine|OtherLines], [FirstLine|NewOtherLines]):-
+	Line > 1,
+	NewLine is Line-1,
+	updateBoard(NewLine, Column, Piece, OtherLines, NewOtherLines).
+
+updateBoardOneList(1, Piece, [_|Tail], [Piece|Tail]).
+updateBoardOneList(Column, Piece, [Head|Tail], [Head|NewTail]):-
+	Column > 1,
+	NewColumn is Column-1,
+	updateBoardOneList(NewColumn, Piece, Tail, NewTail).
+
+
+updateBoard(PieceToChange, Line, Column, Board, NewBoard).
