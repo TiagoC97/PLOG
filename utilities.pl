@@ -12,6 +12,8 @@ waitNewLine:- get_code(L), ite(L == 10, !, waitNewLine).
 
 getDigit(D):- get_code(D1), D is D1 - 48, ite(D1 == 10, !, waitNewLine), !.
 
+getDoubleDigit(D):- get_code(D1), D2 is D1 - 48, get_code(D3), D4 is D3 - 48, D is (D2*10) + D4, ite(D1 == 10, !, waitNewLine), !.
+
 getChar(C):- get_char(C), char_code(C, C1), ite(C1 == 10, !, waitNewLine).
 
 % Implementation of an if statement
@@ -36,29 +38,9 @@ checkColumn(Column):-
   (Column >= 1, Column =< 7);
   nl, write('WARNING! Column must be between 1 and 7!'), nl, nl, !, fail.
 
-/*
-  % Faz update a Board
-  updateTo(_,[],[],_,_).
-  updateTo(ElemToChange,[[_|Xs]|Ys],[[ElemToChange|Xs1]|Ys1],1,1) :-
-                      !,updateTo(ElemToChange,[Xs|Ys],[Xs1|Ys1],0,0).
-
-  updateTo(ElemToChange,[[X]|Xs],[[X]|Xs1],0,0) :-
-                      updateTo(ElemToChange,Xs,Xs1,0,0),!.
-
-  updateTo(ElemToChange,[[X|Xs]|Ys],[[X|Xs1]|Ys1],0,0) :-
-                      updateTo(ElemToChange,[Xs|Ys],[Xs1|Ys1],0,0).
-
-  updateTo(ElemToChange,[[X|Xs]|Ys],[[X|Xs1]|Ys1],N,1) :-
-                      N1 is N-1,
-                      updateTo(ElemToChange,[Xs|Ys],[Xs1|Ys1],N1,1).
-
-  updateTo(ElemToChange,[Xs|Ys],[Xs|Ys1],N,M) :-
-                      M1 is M-1,
-                      updateTo(ElemToChange,Ys,Ys1,N,M1),!.
-
-  updateBoard(ElemToChange,Y,X,Board,NewBoard) :-
-                      updateTo(ElemToChange,Board,NewBoard,X,Y).
-*/
+checkBarragoonFace(Face):-
+  ((Face >= 30, Face =< 37) ; (Face >= 40, Face =< 47)) ;
+  nl, write('WARNING! Please insert a valid barragoon face!'), nl, nl, !, fail.
 
 updateBoard(1, Column, Piece, [FirstLine|OtherLines], [NewFirstLine|OtherLines]):-
 	updateBoardOneList(Column, Piece, FirstLine, NewFirstLine).
@@ -72,6 +54,3 @@ updateBoardOneList(Column, Piece, [Head|Tail], [Head|NewTail]):-
 	Column > 1,
 	NewColumn is Column-1,
 	updateBoardOneList(NewColumn, Piece, Tail, NewTail).
-
-
-updateBoard(PieceToChange, Line, Column, Board, NewBoard).
