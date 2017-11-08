@@ -2,6 +2,7 @@
 :- dynamic(player/1).
 :- dynamic(whiteCounter/1).
 :- dynamic(brownCounter/1).
+:- dynamic(showMessages/1).
 
 
 startGame :-
@@ -53,7 +54,8 @@ get_play(Board, Line, Column, NewLine, NewColumn):-
   !,
   repeat,
     getPieceNewCoords(NewColumn, NewLine),
-    validateMove(Board, Line, Column, NewLine, NewColumn),
+    player(P),
+    validateMove(Board, Line, Column, NewLine, NewColumn, P),
   !.
 
 move(Board, NewBoard3, Line, Column, NewLine, NewColumn):-
@@ -170,9 +172,9 @@ checkPieceFromCurrentPlayer(Board, Line, Column):-
    (player(P), P == 2, (Piece == 22 ; Piece == 23 ; Piece == 24))) ;
    nl, write('WARNING! Cannot choose opponent/barragoon piece!'), nl, nl, !, fail)).
 
-validateMove(Board, Line, Column, NewLine, NewColumn):-
+validateMove(Board, Line, Column, NewLine, NewColumn, Player):-
   getPiece(Board, Line, Column, Piece),
-  checkNewPosPiece(Board, NewLine, NewColumn),
+  checkNewPosPiece(Board, NewLine, NewColumn, Player),
   getPiece(Board, NewLine, NewColumn, NewPiece),
   !,
   verifyNewPosInRange(NewPiece, Piece, Line, Column, NewLine, NewColumn),
@@ -180,10 +182,10 @@ validateMove(Board, Line, Column, NewLine, NewColumn):-
   verifyPieceInTheWay(Line, Column, NewLine, NewColumn, Board).
 
 
-checkNewPosPiece(Board, NewLine, NewColumn):-
+checkNewPosPiece(Board, NewLine, NewColumn, Player):-
   getPiece(Board, NewLine, NewColumn, NewPiece),
-  (((player(P), P == 1, (NewPiece =\= 12 , NewPiece =\= 13 , NewPiece =\= 14)) ;
-   (player(P), P == 2, (NewPiece =\= 22 , NewPiece =\= 23 , NewPiece =\= 24))) ;
+  (((Player == 1, (NewPiece =\= 12 , NewPiece =\= 13 , NewPiece =\= 14)) ;
+   (Player == 2, (NewPiece =\= 22 , NewPiece =\= 23 , NewPiece =\= 24))) ;
    nl, write('WARNING! Cannot capture your own pieces!'), nl, nl, !, fail).
 
 verifyNewPosInRange(00, Piece, Line, Column, NewLine, NewColumn):-
@@ -280,7 +282,7 @@ verifyPieceInTheWay(Line, Column, NewLine, NewColumn, Board):-
     (((Line == NewLine), ColC is (NewColumn - Column), auxLine(Line, Column, Board, ColC)) ;
      ((Column == NewColumn), LineC is (NewLine - Line), auxColumn(Line, Column, Board, LineC)) ;
      (ColC is (NewColumn - Column), LineC is (NewLine - Line), verifyDiagonalWay(Line, Column, Board, LineC, ColC)) ;
-     nl, write('WARNING! Something is in the way!'), nl, nl, !, fail).
+     !, fail).
 
 
 
@@ -297,16 +299,33 @@ verifyValidMoves(Board, ValidMoves, numValidMoves) :-
     player(P),
     ((P==1, whiteCounter(PC), P1 is 2); (P==2, brownCounter(PC), P1 is 1)),
     verifyPiecesLine(Board, 9, P1, Pieces),
-    verifyPiecesValidMoves(Board, Pieces, PC).
+    verifyPiecesValidMoves(Board, Pieces, PC, ValidMoves, numValidMoves).
 
-verifyPiecesValidMoves(Board, Pieces, 0).
+verifyPiecesValidMoves(Board, Pieces, 0, ValidMoves, numValidMoves).
 
-verifyPieceValidMoves(Board, Pieces, N) :-
+verifyPieceValidMoves(Board, Pieces, N, ValidMoves, numValidMoves) :-
     N > 0,
     getCoordsFromList(Pieces, N, Line, Col),
-
+    getPiecePossibleMoves(Board, Line, Col, ValidMoves, numValidMoves),
     N1 is N - 1,
     verifyPieceValidMoves(Board, Pieces, N1).
+
+getPiecePossibleMoves(Board, Line, Col, ValidMoves, numValidMoves):-
+
+
+getPiecePossibleMovesLines(Board, Line, Col, 0, NewCol, ValidMoves, numValidMoves).
+
+getPiecePossibleMovesLines(Board, Line, Col, NewLine, NewCol, ValidMoves, numValidMoves):-
+    NewLine > 0,
+
+    getPiece(Board, Line, Col, Piece),
+    getPiece(Board, NewLine, NewCol, NewPiece),
+
+
+
+
+    NewLine1 is NewLine - 1,
+
 
 verifyPiecesLine(Board, 0, Player, Pieces).
 
