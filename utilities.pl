@@ -30,6 +30,12 @@ getPiece(Board, Line, Col, Piece):-
     nth1(Line, Board, BoardLine),
     nth1(Col, BoardLine, Piece).
 
+getCoordsFromList(List, N, Line, Col):-
+    nth1(N, List, Coords),
+    nth1(1, Coords, Line),
+    nth1(2, Coords, Col).
+
+
 checkLine(Line):-
   (Line >= 1, Line =< 9);
   nl, write('WARNING! Line must be between 1 and 9!'), nl, nl, !, fail.

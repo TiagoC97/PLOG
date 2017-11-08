@@ -79,6 +79,7 @@ captureBarragoon(Board, NewBoard):-
 captureOponentPiece(Board, NewBoard2):-
   ((player(Paux), Paux == 1, brownCounter(BC), BC1 is BC - 1, asserta(brownCounter(BC1)), retract(brownCounter(BC))) ;
   (player(Paux), Paux == 2, whiteCounter(WC), WC1 is WC - 1, asserta(whiteCounter(WC1)), retract(whiteCounter(WC)))),
+  (whiteCounter(WC2), brownCounter(BC2), WC2 =\= 0, BC2 =\= 0),
   repeat,
     ((player(P), P == 1, nl, nl, write('Brown place your barragoon piece'), nl) ;
     (player(P), P == 2, nl, nl, write('White place your barragoon piece'), nl)),
@@ -281,4 +282,47 @@ verifyPieceInTheWay(Line, Column, NewLine, NewColumn, Board):-
      (ColC is (NewColumn - Column), LineC is (NewLine - Line), verifyDiagonalWay(Line, Column, Board, LineC, ColC)) ;
      nl, write('WARNING! Something is in the way!'), nl, nl, !, fail).
 
+
+
+
+
+
+
+
+
 % PARTE MAIS LIXADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+
+verifyValidMoves(Board, ValidMoves, numValidMoves) :-
+    player(P),
+    ((P==1, whiteCounter(PC), P1 is 2); (P==2, brownCounter(PC), P1 is 1)),
+    verifyPiecesLine(Board, 9, P1, Pieces),
+    verifyPiecesValidMoves(Board, Pieces, PC).
+
+verifyPiecesValidMoves(Board, Pieces, 0).
+
+verifyPieceValidMoves(Board, Pieces, N) :-
+    N > 0,
+    getCoordsFromList(Pieces, N, Line, Col),
+
+    N1 is N - 1,
+    verifyPieceValidMoves(Board, Pieces, N1).
+
+verifyPiecesLine(Board, 0, Player, Pieces).
+
+verifyPiecesLine(Board, Line, Player, Pieces) :-
+    Line > 0,
+    verifyPiecesCol(Board, Line, 7, Player, Pieces),
+    Line1 is Line - 1,
+    verifyPiecesLine(Board, Line1, Player, Pieces).
+
+verifyPiecesCol(Board, Line, 0, Player, Pieces).
+
+verifyPiecesCol(Board, Line, Col, Player, Pieces) :-
+    Col > 0,
+    getPiece(Board, Line, Col, Piece),
+    (((Player == 1, (Piece == 12; Piece == 13; Piece == 14), append([Line, Col], Pieces, Pieces2)));
+    ((Player == 2, (Piece == 22; Piece == 23; Piece == 24, append([Line, Col], Pieces, Pieces2))));
+    (append([], Pieces, Pieces2))),
+    Col1 is Col - 1,
+    verifyPiecesCol(Board, Line, Col1, Player, Pieces2).
