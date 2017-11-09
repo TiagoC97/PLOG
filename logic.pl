@@ -338,7 +338,7 @@ getPiecePossibleMovesCols(Board, Line, Col, NewLine, NewCol, ValidMoves, NumVali
       validateMove(Board, Line, Col, NewLine, NewCol, Player),
       append([NewLine, NewCol], ValidMoves, ValidMoves1),
       NumValidMoves1 is NumValidMoves + 1,
-      NewCol1 is NewCol + 1,
+      NewCol1 is NewCol - 1,
       getPiecePossibleMovesCols(Board, Line, Col, NewLine, NewCol1, ValidMoves1, NumValidMoves1, JustCheck, Player)).
 
 
