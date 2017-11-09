@@ -10,26 +10,26 @@ startGame :-
   assert(play_number(0)),
   assert(player(1)),
   assert(whiteCounter(7)),
-  assert(brownCounter(1)),
+  assert(brownCounter(2)),
   assert(showMessages(1)),
   !,
   play_cicle(Board).
 
 play_cicle(Board):-
-  printBoard(Board),
+  /*printBoard(Board),*/
   play(Board, NewBoard),
   !,
-  (verifyEndGame(_),
+  verifyEndGame(NewBoard),
   nextPlayer(_),
   nextPlay(_),
-  play_cicle(NewBoard)).
+  play_cicle(NewBoard).
 
-verifyEndGame(_):-
-  (whiteCounter(WC), brownCounter(BC), WC > 0, BC > 0) ;
+verifyEndGame(Board):-
+
   (((whiteCounter(WC), (WC == 0), nl, write('Brown won'), nl, nl) ; (brownCounter(BC), (BC == 0), nl, write('White won'), nl, nl)),
   !,fail);
   NumValidMoves is 0, (verifyValidMoves(Board, ValidMoves, NumValidMoves) ; true),
-  ((NumValidMoves == 0, Player(P), ((P == 1, nl, write('Brown won'), nl, nl) ; (P == 2, nl, write('White won'), nl, nl)), !, fail) ; true).
+  ((NumValidMoves == 0, player(P), ((P == 1, nl, write('White won'), nl, nl) ; (P == 2, nl, write('Brown won'), nl, nl)), !, fail) ; true).
 
 nextPlayer(_):-
   ((player(P), P == 1, asserta(player(2)), retract(player(P))) ;
@@ -198,14 +198,14 @@ verifyNewPosInRange(00, Piece, Line, Column, NewLine, NewColumn):-
       ((NewColumn =:= Column); (NewColumn =:= Column + 1); (NewColumn =:= Column - 1)));
       ((NewLine =:= Line), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
       ((NewColumn =:= Column), ((NewLine =:= Line + 2); (NewLine =:= Line - 2)));
-      (((showMessages(M), M == 1, nl, write('WARNING! Invalid move!'), nl, nl) ; true), !, fail)) ;
+      (((showMessages(M), M == 1, nl, write('WARNING! Invalid move!'), nl, nl) ; true), !, fail))) ;
 
   ((Piece == 13 ; Piece == 23),
       ((((NewLine =:= Line + 1); (NewLine =:= Line - 1)), ((NewColumn =:= Column + 1); (NewColumn =:= Column - 1); (NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
       (((NewColumn =:= Column + 1); (NewColumn =:= Column - 1)), ((NewLine =:= Line + 2); (NewLine =:= Line - 2)));
       ((NewLine =:= Line), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2); (NewColumn =:= Column + 3); (NewColumn =:= Column - 3)));
       ((NewColumn =:= Column), ((NewLine =:= Line + 2); (NewLine =:= Line - 2); (NewLine =:= Line + 3); (NewLine =:= Line - 3)));
-      (((showMessages(M), M == 1, nl, write('WARNING! Invalid move!'), nl, nl) ; true), !, fail)) ;
+      (((showMessages(M), M == 1, nl, write('WARNING! Invalid move!'), nl, nl) ; true), !, fail))) ;
 
   ((Piece == 14 ; Piece == 24),
       ((((NewLine =:= Line + 1); (NewLine =:= Line - 1)), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2); (NewColumn =:= Column + 3); (NewColumn =:= Column - 3)));
@@ -213,7 +213,7 @@ verifyNewPosInRange(00, Piece, Line, Column, NewLine, NewColumn):-
       (((NewLine =:= Line + 2); (NewLine =:= Line - 2)), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
       ((NewLine =:= Line), ((NewColumn =:= Column + 3); (NewColumn =:= Column - 3); (NewColumn =:= Column + 4); (NewColumn =:= Column - 4)));
       ((NewColumn =:= Column), ((NewLine =:= Line + 3); (NewLine =:= Line - 3); (NewLine =:= Line + 4); (NewLine =:= Line - 4)));
-      (((showMessages(M), M == 1, nl, write('WARNING! Invalid move!'), nl, nl) ; true), !, fail)) ;
+      (((showMessages(M), M == 1, nl, write('WARNING! Invalid move!'), nl, nl) ; true), !, fail))).
 
 verifyNewPosInRange(NewPiece, Piece, Line, Column, NewLine, NewColumn):-
 
@@ -299,12 +299,23 @@ verifyPieceInTheWay(Line, Column, NewLine, NewColumn, Board):-
 
 
 verifyValidMoves(Board, ValidMoves, NumValidMoves) :-
+
     asserta(showMessages(0)), retract(showMessages(1)),
     player(P),
     ((P==1, whiteCounter(PC), P1 is 2); (P==2, brownCounter(PC), P1 is 1)),
-    verifyPiecesLine(Board, 9, P1, Pieces),
+    findall([Line, Col], getPlayerPieces(Board, P1, Col, Line ) ,Pieces),
+    write(Pieces),
+    /*verifyPiecesLine(Board, 9, P1, Pieces),*/
+    !,
+
     verifyPiecesValidMoves(Board, Pieces, PC, ValidMoves, NumValidMoves, P1),
     asserta(showMessages(1)), retract(showMessages(0)).
+
+getPlayerPieces(Board, Player, Col, Line):-
+    getPiece(Board, Line, Col, Piece),
+    ((Player == 1, (Piece == 12; Piece == 13; Piece == 14));
+    (Player == 2, (Piece == 22; Piece == 23; Piece == 24))).
+
 
 verifyPiecesValidMoves(Board, Pieces, 0, ValidMoves, NumValidMoves, Player).
 
@@ -312,6 +323,7 @@ verifyPieceValidMoves(Board, Pieces, N, ValidMoves, NumValidMoves, Player) :-
     N > 0,
     getCoordsFromList(Pieces, N, Line, Col),
     !,
+    findall([Y, X], )
     getPiecePossibleMovesLines(Board, Line, Col, 9, 7, ValidMoves, NumValidMoves, 1, Player),
     N1 is N - 1,
     verifyPieceValidMoves(Board, Pieces, N1).
@@ -346,17 +358,18 @@ verifyPiecesLine(Board, 0, Player, Pieces).
 
 verifyPiecesLine(Board, Line, Player, Pieces) :-
     Line > 0,
-    verifyPiecesCol(Board, Line, 7, Player, Pieces),
+    verifyPiecesCol(Board, Line, 7, Player, NewPieces),
+    append(Pieces, NewPieces, Pieces2),
     Line1 is Line - 1,
-    verifyPiecesLine(Board, Line1, Player, Pieces).
+    verifyPiecesLine(Board, Line1, Player, Pieces2).
 
-verifyPiecesCol(Board, Line, 0, Player, Pieces).
+verifyPiecesCol(Board, Line, 0, Player, Pieces):-!.
 
 verifyPiecesCol(Board, Line, Col, Player, Pieces) :-
     Col > 0,
     getPiece(Board, Line, Col, Piece),
-    (((Player == 1, (Piece == 12; Piece == 13; Piece == 14), append([Line, Col], Pieces, Pieces2)));
-    ((Player == 2, (Piece == 22; Piece == 23; Piece == 24, append([Line, Col], Pieces, Pieces2))));
+    (((Player == 1, (Piece == 12; Piece == 13; Piece == 14), append([[Line, Col]] , Pieces, Pieces2)));
+    ((Player == 2, (Piece == 22; Piece == 23; Piece == 24), append([[Line, Col]], Pieces, Pieces2)));
     (append([], Pieces, Pieces2))),
     Col1 is Col - 1,
     verifyPiecesCol(Board, Line, Col1, Player, Pieces2).
