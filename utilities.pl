@@ -60,3 +60,7 @@ updateBoardOneList(Column, Piece, [Head|Tail], [Head|NewTail]):-
 	Column > 1,
 	NewColumn is Column-1,
 	updateBoardOneList(NewColumn, Piece, Tail, NewTail).
+
+  removeElementsFromlist([], _, []).
+  removeElementsFromlist([H|Tail], L2, Rest):- member(H, L2), !, removeElementsFromlist(Tail, L2, Rest).
+  removeElementsFromlist([H|Tail], L2, [H|Rest]):- removeElementsFromlist(Tail, L2, Rest).
