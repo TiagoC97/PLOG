@@ -2,21 +2,22 @@
 :- dynamic(player/1).
 :- dynamic(whiteCounter/1).
 :- dynamic(brownCounter/1).
-:- dynamic(showMessages/1).
-
 
 startGame :-
   initialBoard(Board),
-  assert(play_number(0)),
-  assert(player(1)),
-  assert(whiteCounter(7)),
-  assert(brownCounter(2)),
-  assert(showMessages(1)),
+  retractall(play_number(_)),
+  retractall(player(_)),
+  retractall(whiteCounter(_)),
+  retractall(brownCounter(_)),
+  asserta(play_number(0)),
+  asserta(player(1)),
+  asserta(whiteCounter(7)),
+  asserta(brownCounter(2)),
   !,
   play_cicle(Board).
 
 play_cicle(Board):-
-  printBoard(Board),
+  /*printBoard(Board),*/
   !,
   play(Board, NewBoard),
   !,
@@ -33,6 +34,8 @@ verifyEndGame(Board):-
   (getValidMoves(Board, ValidMoves) ; true),
   removeElementsFromlist(ValidMoves, [[]], NewValidMoves),
   length(NewValidMoves, NumValidMoves),
+  write(NumValidMoves),nl,
+  write(NewValidMoves),nl,
   ((NumValidMoves == 0, player(P),  ((P == 1, nl, write('White won'), nl, nl) ; (P == 2, nl, write('Brown won'), nl, nl)), !, fail) ; true).
 
 
@@ -71,7 +74,8 @@ move(Board, NewBoard3, Line, Column, NewLine, NewColumn):-
   getPiece(Board, NewLine, NewColumn, NewPiece),
   updateBoard(Line, Column, 00, Board, NewBoard),
   updateBoard(NewLine, NewColumn, Piece, NewBoard, NewBoard2),
-  (((NewPiece =\= 00), !, verifyEndGame(NewBoard2), printBoard(NewBoard2), verifyTypeNewPiece(NewPiece, NewBoard2, NewBoard3 )) ; NewBoard3 = NewBoard2).
+  (((NewPiece =\= 00), !, verifyEndGame(NewBoard2),
+  /*printBoard(NewBoard2),*/ write('AAAAAAAAA'), verifyTypeNewPiece(NewPiece, NewBoard2, NewBoard3 )) ; NewBoard3 = NewBoard2).
 
 verifyTypeNewPiece(NewPiece, Board, NewBoard):-
   ((((NewPiece >= 30) , (NewPiece =< 37)) ; ((NewPiece >= 40) , (NewPiece =< 47))),
@@ -185,15 +189,32 @@ validateMove(Board, Line, Column, NewLine, NewColumn, Player):-
   getPiece(Board, Line, Column, Piece),
   checkNewPosPiece(Board, NewLine, NewColumn, Player),
   getPiece(Board, NewLine, NewColumn, NewPiece),
+  !,
   verifyNewPosInRange(NewPiece, Piece, Line, Column, NewLine, NewColumn),
+  !,
   verifyPieceInTheWay(Line, Column, NewLine, NewColumn, Board).
+
+validateMoveNoMessages(Board, Line, Column, NewLine, NewColumn, Player):-
+  getPiece(Board, Line, Column, Piece),
+  checkNewPosPieceNoMessages(Board, NewLine, NewColumn, Player),
+  getPiece(Board, NewLine, NewColumn, NewPiece),
+  verifyNewPosInRangeNoMessages(NewPiece, Piece, Line, Column, NewLine, NewColumn),
+  verifyPieceInTheWayNoMessages(Line, Column, NewLine, NewColumn, Board).
 
 
 checkNewPosPiece(Board, NewLine, NewColumn, Player):-
   getPiece(Board, NewLine, NewColumn, NewPiece),
+  write(NewColumn), write('   '), write(NewLine),nl,
+  write(NewPiece),
   (((Player == 1, (NewPiece =\= 12 , NewPiece =\= 13 , NewPiece =\= 14)) ;
    (Player == 2, (NewPiece =\= 22 , NewPiece =\= 23 , NewPiece =\= 24))) ;
-   ((showMessages(M), M == 1, nl, write('WARNING! Cannot capture your own pieces!'), nl, nl, !, fail) ; fail)).
+   nl, write('WARNING! Cannot capture your own pieces!'), nl, nl, !, fail).
+
+checkNewPosPieceNoMessages(Board, NewLine, NewColumn, Player):-
+  getPiece(Board, NewLine, NewColumn, NewPiece),
+  (((Player == 1, (NewPiece =\= 12 , NewPiece =\= 13 , NewPiece =\= 14)) ;
+   (Player == 2, (NewPiece =\= 22 , NewPiece =\= 23 , NewPiece =\= 24))) ;
+   fail).
 
 verifyNewPosInRange(00, Piece, Line, Column, NewLine, NewColumn):-
 
@@ -202,14 +223,14 @@ verifyNewPosInRange(00, Piece, Line, Column, NewLine, NewColumn):-
       ((NewColumn =:= Column); (NewColumn =:= Column + 1); (NewColumn =:= Column - 1)));
       ((NewLine =:= Line), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
       ((NewColumn =:= Column), ((NewLine =:= Line + 2); (NewLine =:= Line - 2)));
-      (((showMessages(M), M == 1, nl, write('WARNING! Invalid move!'), nl, nl, !, fail) ; fail)))) ;
+      (nl, write('WARNING! Invalid move!'), nl, nl, !, fail))) ;
 
   ((Piece == 13 ; Piece == 23),
       ((((NewLine =:= Line + 1); (NewLine =:= Line - 1)), ((NewColumn =:= Column + 1); (NewColumn =:= Column - 1); (NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
       (((NewColumn =:= Column + 1); (NewColumn =:= Column - 1)), ((NewLine =:= Line + 2); (NewLine =:= Line - 2)));
       ((NewLine =:= Line), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2); (NewColumn =:= Column + 3); (NewColumn =:= Column - 3)));
       ((NewColumn =:= Column), ((NewLine =:= Line + 2); (NewLine =:= Line - 2); (NewLine =:= Line + 3); (NewLine =:= Line - 3)));
-      (((showMessages(M), M == 1, nl, write('WARNING! Invalid move!'), nl, nl, !, fail) ; fail)))) ;
+      (nl, write('WARNING! Invalid move!'), nl, nl, !, fail))) ;
 
   ((Piece == 14 ; Piece == 24),
       ((((NewLine =:= Line + 1); (NewLine =:= Line - 1)), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2); (NewColumn =:= Column + 3); (NewColumn =:= Column - 3)));
@@ -217,24 +238,48 @@ verifyNewPosInRange(00, Piece, Line, Column, NewLine, NewColumn):-
       (((NewLine =:= Line + 2); (NewLine =:= Line - 2)), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
       ((NewLine =:= Line), ((NewColumn =:= Column + 3); (NewColumn =:= Column - 3); (NewColumn =:= Column + 4); (NewColumn =:= Column - 4)));
       ((NewColumn =:= Column), ((NewLine =:= Line + 3); (NewLine =:= Line - 3); (NewLine =:= Line + 4); (NewLine =:= Line - 4)));
-      (((showMessages(M), M == 1, nl, write('WARNING! Invalid move!'), nl, nl, !, fail) ; fail)))).
+      (nl, write('WARNING! Invalid move!'), nl, nl, !, fail))).
+
+verifyNewPosInRangeNoMessages(00, Piece, Line, Column, NewLine, NewColumn):-
+
+    ((Piece == 12 ; Piece == 22),
+        ((((NewLine =:= Line); (NewLine =:= Line + 1); (NewLine =:= Line - 1)),
+        ((NewColumn =:= Column); (NewColumn =:= Column + 1); (NewColumn =:= Column - 1)));
+        ((NewLine =:= Line), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
+        ((NewColumn =:= Column), ((NewLine =:= Line + 2); (NewLine =:= Line - 2)));
+        fail)) ;
+
+    ((Piece == 13 ; Piece == 23),
+        ((((NewLine =:= Line + 1); (NewLine =:= Line - 1)), ((NewColumn =:= Column + 1); (NewColumn =:= Column - 1); (NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
+        (((NewColumn =:= Column + 1); (NewColumn =:= Column - 1)), ((NewLine =:= Line + 2); (NewLine =:= Line - 2)));
+        ((NewLine =:= Line), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2); (NewColumn =:= Column + 3); (NewColumn =:= Column - 3)));
+        ((NewColumn =:= Column), ((NewLine =:= Line + 2); (NewLine =:= Line - 2); (NewLine =:= Line + 3); (NewLine =:= Line - 3)));
+        fail)) ;
+
+    ((Piece == 14 ; Piece == 24),
+        ((((NewLine =:= Line + 1); (NewLine =:= Line - 1)), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2); (NewColumn =:= Column + 3); (NewColumn =:= Column - 3)));
+        (((NewColumn =:= Column + 1); (NewColumn =:= Column - 1)), ((NewLine =:= Line + 2); (NewLine =:= Line - 2); (NewLine =:= Line + 3); (NewLine =:= Line - 3)));
+        (((NewLine =:= Line + 2); (NewLine =:= Line - 2)), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
+        ((NewLine =:= Line), ((NewColumn =:= Column + 3); (NewColumn =:= Column - 3); (NewColumn =:= Column + 4); (NewColumn =:= Column - 4)));
+        ((NewColumn =:= Column), ((NewLine =:= Line + 3); (NewLine =:= Line - 3); (NewLine =:= Line + 4); (NewLine =:= Line - 4)));
+        fail)).
 
 verifyNewPosInRange(NewPiece, Piece, Line, Column, NewLine, NewColumn):-
 
   ((Piece == 12 ; Piece == 22),
-      (((NewPiece == 37), ((showMessages(M), M == 1, nl, write('WARNING! Cannot capture all turns with 2-space!'), nl, nl, !, fail) ; fail));
+      (((NewPiece == 37), nl, write('WARNING! Cannot capture all turns with 2-space!'), nl, nl, !, fail);
       ((((NewLine =:= Line + 1); (NewLine =:= Line - 1)),
       ((NewColumn =:= Column + 1); (NewColumn =:= Column - 1)));
       ((NewLine =:= Line), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
       ((NewColumn =:= Column), ((NewLine =:= Line + 2); (NewLine =:= Line - 2)));
-      ((showMessages(M), M == 1, nl, write('WARNING! Cannot capture with short move!'), nl, nl, !, fail) ; fail))));
+      (nl, write('WARNING! New position is out of range or cannot capture with short move!'), nl, nl, !, fail))));
 
   ((Piece == 13 ; Piece == 23),
       ((((NewLine =:= Line + 1); (NewLine =:= Line - 1)), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
       (((NewColumn =:= Column + 1); (NewColumn =:= Column - 1)), ((NewLine =:= Line + 2); (NewLine =:= Line - 2)));
       ((NewLine =:= Line), ((NewColumn =:= Column + 3); (NewColumn =:= Column - 3)));
       ((NewColumn =:= Column), ((NewLine =:= Line + 3); (NewLine =:= Line - 3)));
-      ((showMessages(M), M == 1, nl, write('WARNING! Cannot capture with short move!'), nl, nl, !, fail) ; fail))) ;
+      (nl, write('WARNING! New position is out of range or cannot capture with short move!'), nl, nl, !, fail))) ;
 
   ((Piece == 14 ; Piece == 24),
       ((((NewLine =:= Line + 1); (NewLine =:= Line - 1)), ((NewColumn =:= Column + 3); (NewColumn =:= Column - 3)));
@@ -242,7 +287,32 @@ verifyNewPosInRange(NewPiece, Piece, Line, Column, NewLine, NewColumn):-
       (((NewLine =:= Line + 2); (NewLine =:= Line - 2)), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
       ((NewLine =:= Line), ((NewColumn =:= Column + 4); (NewColumn =:= Column - 4)));
       ((NewColumn =:= Column), ((NewLine =:= Line + 4); (NewLine =:= Line - 4)));
-      ((showMessages(M), M == 1, nl, write('WARNING! Cannot capture with short move!'), nl, nl, !, fail) ; fail))).
+      (nl, write('WARNING! New position is out of range or cannot capture with short move!'), nl, nl, !, fail))).
+
+verifyNewPosInRangeNoMessages(NewPiece, Piece, Line, Column, NewLine, NewColumn):-
+
+  ((Piece == 12 ; Piece == 22),
+      (((NewPiece == 37), fail);
+      ((((NewLine =:= Line + 1); (NewLine =:= Line - 1)),
+      ((NewColumn =:= Column + 1); (NewColumn =:= Column - 1)));
+      ((NewLine =:= Line), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
+      ((NewColumn =:= Column), ((NewLine =:= Line + 2); (NewLine =:= Line - 2)));
+      fail)));
+
+  ((Piece == 13 ; Piece == 23),
+      ((((NewLine =:= Line + 1); (NewLine =:= Line - 1)), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
+      (((NewColumn =:= Column + 1); (NewColumn =:= Column - 1)), ((NewLine =:= Line + 2); (NewLine =:= Line - 2)));
+      ((NewLine =:= Line), ((NewColumn =:= Column + 3); (NewColumn =:= Column - 3)));
+      ((NewColumn =:= Column), ((NewLine =:= Line + 3); (NewLine =:= Line - 3)));
+      fail));
+
+  ((Piece == 14 ; Piece == 24),
+      ((((NewLine =:= Line + 1); (NewLine =:= Line - 1)), ((NewColumn =:= Column + 3); (NewColumn =:= Column - 3)));
+      (((NewColumn =:= Column + 1); (NewColumn =:= Column - 1)), ((NewLine =:= Line + 3); (NewLine =:= Line - 3)));
+      (((NewLine =:= Line + 2); (NewLine =:= Line - 2)), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
+      ((NewLine =:= Line), ((NewColumn =:= Column + 4); (NewColumn =:= Column - 4)));
+      ((NewColumn =:= Column), ((NewLine =:= Line + 4); (NewLine =:= Line - 4)));
+      fail)).
 
 auxLine(Line, Column, Board, 1).
 auxLine(Line, Column, Board, -1).
@@ -289,8 +359,13 @@ verifyPieceInTheWay(Line, Column, NewLine, NewColumn, Board):-
     (((Line == NewLine), ColC is (NewColumn - Column), auxLine(Line, Column, Board, ColC)) ;
      ((Column == NewColumn), LineC is (NewLine - Line), auxColumn(Line, Column, Board, LineC)) ;
      (ColC is (NewColumn - Column), LineC is (NewLine - Line), verifyDiagonalWay(Line, Column, Board, LineC, ColC)) ;
-     ((showMessages(M),!, M == 1, nl, write('WARNING! Cannot capture with short move!'), nl, nl, !, fail) ; fail)).
+     (nl, write('WARNING! Something is in the way!'), nl, nl, !, fail)).
 
+verifyPieceInTheWayNoMessages(Line, Column, NewLine, NewColumn, Board):-
+     (((Line == NewLine), ColC is (NewColumn - Column), auxLine(Line, Column, Board, ColC)) ;
+     ((Column == NewColumn), LineC is (NewLine - Line), auxColumn(Line, Column, Board, LineC)) ;
+     (ColC is (NewColumn - Column), LineC is (NewLine - Line), verifyDiagonalWay(Line, Column, Board, LineC, ColC)) ;
+     fail).
 
 
 
@@ -302,13 +377,18 @@ verifyPieceInTheWay(Line, Column, NewLine, NewColumn, Board):-
 % PARTE MAIS LIXADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 
-getValidMoves(Board, ValidMoves1) :-
+getValidMoves(Board, ValidMoves) :-
 
-    asserta(showMessages(0)), retract(showMessages(1)),
+    player(P),
+    ((P==1, P1 is 2); (P==2, P1 is 1)),
+    (setof([[NewLine, NewCol], [PieceLine, PieceCol]],(getPlayerPieces(Board, P1, PieceCol, PieceLine),
+    validateMoveNoMessages(Board, PieceLine, PieceCol, NewLine, NewCol, P1)), ValidMoves) ; true).
+
+getValuedValidMoves(Board, ValidMoves):-
     player(P),
     ((P==1, brownCounter(PC), P1 is 2); (P==2, whiteCounter(PC), P1 is 1)),
-    (setof([[PieceLine, PieceCol], [NewLine, NewCol]],(getPlayerPieces(Board, P1, PieceCol, PieceLine),  validateMove(Board, PieceLine, PieceCol, NewLine, NewCol, P1)), ValidMoves1) ; true),
-    asserta(showMessages(1)), retract(showMessages(0)).
+    (setof([[Value, NewLine, NewCol], [PieceLine, PieceCol]],(getPlayerPieces(Board, P1, PieceCol, PieceLine),
+    validateMoveNoMessages(Board, PieceLine, PieceCol, NewLine, NewCol, P1)), ValidMoves) ; true).
 
 getPlayerPieces(Board, Player, Col, Line):-
     getPiece(Board, Line, Col, Piece),
