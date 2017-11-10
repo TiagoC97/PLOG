@@ -3,7 +3,7 @@
 :- dynamic(whiteCounter/1).
 :- dynamic(brownCounter/1).
 
-startGame :-
+startGame(Mode, AiLevel) :-
   initialBoard(Board),
   retractall(play_number(_)),
   retractall(player(_)),
@@ -17,7 +17,7 @@ startGame :-
   play_cicle(Board).
 
 play_cicle(Board):-
-  /*printBoard(Board),*/
+  printBoard(Board),
   !,
   play(Board, NewBoard),
   !,
@@ -34,8 +34,6 @@ verifyEndGame(Board):-
   (getValidMoves(Board, ValidMoves) ; true),
   removeElementsFromlist(ValidMoves, [[]], NewValidMoves),
   length(NewValidMoves, NumValidMoves),
-  write(NumValidMoves),nl,
-  write(NewValidMoves),nl,
   ((NumValidMoves == 0, player(P),  ((P == 1, nl, write('White won'), nl, nl) ; (P == 2, nl, write('Brown won'), nl, nl)), !, fail) ; true).
 
 
@@ -74,8 +72,7 @@ move(Board, NewBoard3, Line, Column, NewLine, NewColumn):-
   getPiece(Board, NewLine, NewColumn, NewPiece),
   updateBoard(Line, Column, 00, Board, NewBoard),
   updateBoard(NewLine, NewColumn, Piece, NewBoard, NewBoard2),
-  (((NewPiece =\= 00), !, verifyEndGame(NewBoard2),
-  /*printBoard(NewBoard2),*/ write('AAAAAAAAA'), verifyTypeNewPiece(NewPiece, NewBoard2, NewBoard3 )) ; NewBoard3 = NewBoard2).
+  (((NewPiece =\= 00), !, verifyEndGame(NewBoard2),printBoard(NewBoard2), verifyTypeNewPiece(NewPiece, NewBoard2, NewBoard3 )) ; NewBoard3 = NewBoard2).
 
 verifyTypeNewPiece(NewPiece, Board, NewBoard):-
   ((((NewPiece >= 30) , (NewPiece =< 37)) ; ((NewPiece >= 40) , (NewPiece =< 47))),
@@ -388,9 +385,18 @@ getValuedValidMoves(Board, ValidMoves):-
     player(P),
     ((P==1, brownCounter(PC), P1 is 2); (P==2, whiteCounter(PC), P1 is 1)),
     (setof([[Value, NewLine, NewCol], [PieceLine, PieceCol]],(getPlayerPieces(Board, P1, PieceCol, PieceLine),
-    validateMoveNoMessages(Board, PieceLine, PieceCol, NewLine, NewCol, P1)), ValidMoves) ; true).
+    validateMoveNoMessages(Board, PieceLine, PieceCol, NewLine, NewCol, P1), setMoveValue(Board, NewLine, NewCol, Value))
+    , ValidMoves) ; true).
 
 getPlayerPieces(Board, Player, Col, Line):-
     getPiece(Board, Line, Col, Piece),
     ((Player == 1, (Piece == 12; Piece == 13; Piece == 14));
     (Player == 2, (Piece == 22; Piece == 23; Piece == 24))).
+
+setMoveValue(Board, NewLine, NewCol, Value):-
+    getPiece(Board, NewLine, NewCol, Piece),
+    (((Piece == 00), Value is 0);
+     ((((Piece >= 30) , (Piece =< 37)) ; ((Piece >= 40) , (Piece =< 47))), Value is 1);
+     ((Piece == 12 ; Piece == 22), Value is 2);
+     ((Piece == 13 ; Piece == 23), Value is 3);
+     ((Piece == 14 ; Piece == 24), Value is 4)).
