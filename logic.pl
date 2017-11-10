@@ -30,10 +30,10 @@ verifyEndGame(Board):-
   (((whiteCounter(WC), (WC == 0), printBoard(Board), nl, write('Brown won'), nl, nl) ;
   (brownCounter(BC), (BC == 0), printBoard(Board), nl, write('White won'), nl, nl)),
   !,fail);
-  (verifyValidMoves(Board, ValidMoves) ; true),
+  (getValidMoves(Board, ValidMoves) ; true),
   removeElementsFromlist(ValidMoves, [[]], NewValidMoves),
   length(NewValidMoves, NumValidMoves),
-  ((NumValidMoves == 0, player(P), printBoard(Board), ((P == 1, nl, write('White won'), nl, nl) ; (P == 2, nl, write('Brown won'), nl, nl)), !, fail) ; true).
+  ((NumValidMoves == 0, player(P),  ((P == 1, nl, write('White won'), nl, nl) ; (P == 2, nl, write('Brown won'), nl, nl)), !, fail) ; true).
 
 
 nextPlayer(_):-
@@ -302,76 +302,15 @@ verifyPieceInTheWay(Line, Column, NewLine, NewColumn, Board):-
 % PARTE MAIS LIXADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 
-verifyValidMoves(Board, ValidMoves1) :-
+getValidMoves(Board, ValidMoves1) :-
 
     asserta(showMessages(0)), retract(showMessages(1)),
     player(P),
     ((P==1, brownCounter(PC), P1 is 2); (P==2, whiteCounter(PC), P1 is 1)),
-    findall([Line, Col], getPlayerPieces(Board, P1, Col, Line ) ,Pieces),
-    verifyPiecesLine(Board, 9, P1, Pieces),
-    !,
-    (verifyPiecesValidMoves(Board, Pieces, PC, [],  ValidMoves, P1) ; true),
-    nth1(1, ValidMoves, ValidMoves1),
+    (setof([[PieceLine, PieceCol], [NewLine, NewCol]],(getPlayerPieces(Board, P1, PieceCol, PieceLine),  validateMove(Board, PieceLine, PieceCol, NewLine, NewCol, P1)), ValidMoves1) ; true),
     asserta(showMessages(1)), retract(showMessages(0)).
 
 getPlayerPieces(Board, Player, Col, Line):-
     getPiece(Board, Line, Col, Piece),
     ((Player == 1, (Piece == 12; Piece == 13; Piece == 14));
     (Player == 2, (Piece == 22; Piece == 23; Piece == 24))).
-
-
-verifyPiecesValidMoves(Board, Pieces, 0, [], [], Player).
-
-verifyPiecesValidMoves(Board, Pieces, N, NewListValidMoves, [RestValidMoves|NewListValidMoves], Player) :-
-    N > 0,
-    getCoordsFromList(Pieces, N, Line, Col),
-    !,
-    (setof([NewLine, NewCol], validateMove(Board, Line, Col, NewLine, NewCol, Player), NewList) ; NewList = []),
-    N1 is N - 1,
-    verifyPiecesValidMoves(Board, Pieces, N1, NewList, RestValidMoves, Player).
-
-
-getPiecePossibleMovesLines(Board, Line, Col, 0, NewCol, ValidMoves, NumValidMoves, JustCheck, Player).
-
-getPiecePossibleMovesLines(Board, Line, Col, NewLine, NewCol, ValidMoves, NumValidMoves, JustCheck, Player):-
-    NewLine > 0,
-
-	((justCheck == 1, NumValidMoves > 0, !, fail) ;
-    getPiecePossibleMovesCols(Board, Line, Col, NewLine, NewCol, ValidMoves, NumValidMoves, JustCheck, Player),
-
-    NewLine1 is NewLine - 1,
-    getPiecePossibleMovesLines(Board, Line, Col, NewLine1, NewCol, ValidMoves, NumValidMoves, JustCheck, Player)).
-
-
-getPiecePossibleMovesCols(Board, Line, Col, NewLine, 0, ValidMoves, NumValidMoves, JustCheck, Player).
-
-getPiecePossibleMovesCols(Board, Line, Col, NewLine, NewCol, ValidMoves, NumValidMoves, JustCheck, Player):-
-    NumCol > 0,
-
-    ((justCheck == 1, NumValidMoves > 0, !, fail) ;
-      validateMove(Board, Line, Col, NewLine, NewCol, Player),
-      append([NewLine, NewCol], ValidMoves, ValidMoves1),
-      NumValidMoves1 is NumValidMoves + 1,
-      NewCol1 is NewCol - 1,
-      getPiecePossibleMovesCols(Board, Line, Col, NewLine, NewCol1, ValidMoves1, NumValidMoves1, JustCheck, Player)).
-
-
-verifyPiecesLine(Board, 0, Player, Pieces).
-
-verifyPiecesLine(Board, Line, Player, Pieces) :-
-    Line > 0,
-    verifyPiecesCol(Board, Line, 7, Player, NewPieces),
-    append(Pieces, NewPieces, Pieces2),
-    Line1 is Line - 1,
-    verifyPiecesLine(Board, Line1, Player, Pieces2).
-
-verifyPiecesCol(Board, Line, 0, Player, Pieces):-!.
-
-verifyPiecesCol(Board, Line, Col, Player, Pieces) :-
-    Col > 0,
-    getPiece(Board, Line, Col, Piece),
-    (((Player == 1, (Piece == 12; Piece == 13; Piece == 14), append([[Line, Col]] , Pieces, Pieces2)));
-    ((Player == 2, (Piece == 22; Piece == 23; Piece == 24), append([[Line, Col]], Pieces, Pieces2)));
-    (append([], Pieces, Pieces2))),
-    Col1 is Col - 1,
-    verifyPiecesCol(Board, Line, Col1, Player, Pieces2).
