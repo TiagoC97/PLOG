@@ -13,33 +13,35 @@ startGame(Mode, AiLevel) :-
   asserta(player(1)),
   asserta(whiteCounter(7)),
   asserta(brownCounter(2)),
-  !,
-  play_cicle(Board).
+  play_cicle(Board, Mode, AiLevel).
 
-play_cicle(Board):-
-  printBoard(Board),
+play_cicle(Board, Mode, AiLevel):-
+  printBoard(Board), nl,
   !,
-  play(Board, NewBoard),
+  play(Board, NewBoard, Mode, AiLevel),
   !,
   verifyEndGame(NewBoard),
+  !,
   nextPlayer(_),
   nextPlay(_),
-  play_cicle(NewBoard).
+  play_cicle(NewBoard, Mode, AiLevel).
 
 verifyEndGame(Board):-
 
-  (((whiteCounter(WC), (WC == 0), printBoard(Board), nl, write('Brown won'), nl, nl) ;
-  (brownCounter(BC), (BC == 0), printBoard(Board), nl, write('White won'), nl, nl)),
+  (((whiteCounter(WC), (WC == 0),!, printBoard(Board),!,  nl, write('Brown won'), nl, nl) ;
+  (brownCounter(BC), (BC == 0),!, printBoard(Board),!, nl, write('White won'), nl, nl)),
   !,fail);
-  (getValidMoves(Board, ValidMoves) ; true),
-  removeElementsFromlist(ValidMoves, [[]], NewValidMoves),
-  length(NewValidMoves, NumValidMoves),
-  ((NumValidMoves == 0, player(P),  ((P == 1, nl, write('White won'), nl, nl) ; (P == 2, nl, write('Brown won'), nl, nl)), !, fail) ; true).
+  player(P),
+  ((P==1, P1 is 2); (P==2, P1 is 1)),
+  (getValidMoves(Board, ValidMoves, P1) ; true),
+  length(ValidMoves, NumValidMoves),
+  ((NumValidMoves == 0, printBoard(Board), ((P == 1, nl, write('White won'), nl, nl) ; (P == 2, nl, write('Brown won'), nl, nl)), !, fail) ; true).
 
 
 nextPlayer(_):-
-  ((player(P), P == 1, asserta(player(2)), retract(player(P))) ;
-   (player(P), P == 2, asserta(player(1)), retract(player(P)))).
+  player(P),
+  ((P == 1, asserta(player(2)), retract(player(P))) ;
+   (P == 2, asserta(player(1)), retract(player(P)))).
 
 nextPlay(_):-
   play_number(P),
@@ -47,12 +49,33 @@ nextPlay(_):-
   asserta(play_number(P1)),
   retract(play_number(P)).
 
-play(Board, NewBoard):-
+play(Board, NewBoard, 1, _):-
   repeat,
     get_play(Board, Line, Column, NewLine, NewColumn),
   !,
-  move(Board, NewBoard, Line, Column, NewLine, NewColumn).
+  move(Board, NewBoard, Line, Column, NewLine, NewColumn, 1, _).
 
+play(Board, NewBoard, 2, AiLevel):-
+  player(P),
+  (
+    (
+      (P == 1),
+      repeat,
+        get_play(Board, Line, Column, NewLine, NewColumn),
+      !
+    ) ;
+    (
+      (P == 2),
+      getAiPlay(Board, Line, Column, NewLine, NewColumn, AiLevel),
+      write('Column of the piece to move: '), write(Column), nl,
+      write('Line of the piece to move: '), write(Line), nl,
+      write('NewColumn of the new place for the piece to move: '), write(NewColumn), nl,
+      write('NewLine of the new place for the piece to move: '), write(NewLine), nl,nl,
+      write('Press any key to continue: '), getChar(_), nl
+    )
+  ),
+  !,
+  move(Board, NewBoard, Line, Column, NewLine, NewColumn, 2, AiLevel).
 
 
 get_play(Board, Line, Column, NewLine, NewColumn):-
@@ -67,19 +90,34 @@ get_play(Board, Line, Column, NewLine, NewColumn):-
     validateMove(Board, Line, Column, NewLine, NewColumn, P),
   !.
 
-move(Board, NewBoard3, Line, Column, NewLine, NewColumn):-
+getAiPlay(Board, Line, Column, NewLine, NewColumn, 1):-
+  tellPlayerToPlay(_),
+  player(P),
+  getValidMoves(Board, ValidMoves, P),
+  length(ValidMoves, NumValidMoves),
+  random(1, NumValidMoves, PosValidMoves),
+  nth1(PosValidMoves, ValidMoves, Move),
+  nth1(1, Move, NewPlace),
+  nth1(2, Move, Piece),
+  nth1(1, Piece, Line),
+  nth1(2, Piece, Column),
+  nth1(1, NewPlace, NewLine),
+  nth1(2, NewPlace, NewColumn).
+
+
+move(Board, NewBoard3, Line, Column, NewLine, NewColumn, Mode, AiLevel):-
   getPiece(Board, Line, Column, Piece),
   getPiece(Board, NewLine, NewColumn, NewPiece),
   updateBoard(Line, Column, 00, Board, NewBoard),
   updateBoard(NewLine, NewColumn, Piece, NewBoard, NewBoard2),
-  (((NewPiece =\= 00), !, verifyEndGame(NewBoard2),printBoard(NewBoard2), verifyTypeNewPiece(NewPiece, NewBoard2, NewBoard3 )) ; NewBoard3 = NewBoard2).
+  (((NewPiece =\= 00), !, verifyEndGame(NewBoard2), printBoard(NewBoard2), verifyTypeNewPiece(NewPiece, NewBoard2, NewBoard3, Mode, AiLevel)) ; NewBoard3 = NewBoard2).
 
-verifyTypeNewPiece(NewPiece, Board, NewBoard):-
+verifyTypeNewPiece(NewPiece, Board, NewBoard, Mode, AiLevel):-
   ((((NewPiece >= 30) , (NewPiece =< 37)) ; ((NewPiece >= 40) , (NewPiece =< 47))),
-  captureBarragoon(Board, NewBoard)) ;
-  captureOponentPiece(Board, NewBoard).
+  captureBarragoon(Board, NewBoard, Mode, AiLevel)) ;
+  captureOponentPiece(Board, NewBoard, Mode, AiLevel).
 
-captureBarragoon(Board, NewBoard):-
+captureBarragoon(Board, NewBoard, 1, _):-
   repeat,
     getBarragoonCoords(Column, Line, BarragoonFace),
     getPiece(Board, Line, Column, Piece),
@@ -87,13 +125,14 @@ captureBarragoon(Board, NewBoard):-
   !,
   updateBoard(Line, Column, BarragoonFace, Board, NewBoard).
 
-captureOponentPiece(Board, NewBoard2):-
-  ((player(Paux), Paux == 1, brownCounter(BC), BC1 is BC - 1, asserta(brownCounter(BC1)), retract(brownCounter(BC))) ;
-  (player(Paux), Paux == 2, whiteCounter(WC), WC1 is WC - 1, asserta(whiteCounter(WC1)), retract(whiteCounter(WC)))),
+captureOponentPiece(Board, NewBoard2, 1, _):-
+  player(P),
+  ((P == 1, brownCounter(BC), BC1 is BC - 1, asserta(brownCounter(BC1)), retract(brownCounter(BC))) ;
+  (P == 2, whiteCounter(WC), WC1 is WC - 1, asserta(whiteCounter(WC1)), retract(whiteCounter(WC)))),
   (whiteCounter(WC2), brownCounter(BC2), WC2 =\= 0, BC2 =\= 0),
   repeat,
-    ((player(P), P == 1, nl, nl, write('Brown place your barragoon piece'), nl) ;
-    (player(P), P == 2, nl, nl, write('White place your barragoon piece'), nl)),
+    ((P == 1, nl, nl, write('Brown place your barragoon piece'), nl) ;
+    (P == 2, nl, nl, write('White place your barragoon piece'), nl)),
     getBarragoonCoords(Column, Line, BarragoonFace),
     getPiece(Board, Line, Column, Piece),
     ((Piece == 00) ; nl, nl, write('WARNING! Place chosen isn\'t empty!'), nl, nl, fail),
@@ -101,8 +140,39 @@ captureOponentPiece(Board, NewBoard2):-
   updateBoard(Line, Column, BarragoonFace, Board, NewBoard),
   printBoard(NewBoard),
   repeat,
-    ((player(P1), P1 == 1, nl, nl, write('White place your barragoon piece'), nl) ;
-    (player(P1), P1 == 2, nl, nl, write('Brown place your barragoon piece'), nl)),
+    ((P == 1, nl, nl, write('White place your barragoon piece'), nl) ;
+    (P == 2, nl, nl, write('Brown place your barragoon piece'), nl)),
+    getBarragoonCoords(Column2, Line2, BarragoonFace2),
+    getPiece(NewBoard, Line2, Column2, Piece2),
+    ((Piece2 == 00) ; nl, nl, write('WARNING! Place chosen isn\'t empty!'), nl, nl, fail),
+  !,
+  updateBoard(Line2, Column2, BarragoonFace2, NewBoard, NewBoard2).
+
+captureBarragoon(Board, NewBoard, 2, AiLevel):-
+  repeat,
+    getBarragoonCoords(Column, Line, BarragoonFace),
+    getPiece(Board, Line, Column, Piece),
+    (Piece == 00),
+  !,
+  updateBoard(Line, Column, BarragoonFace, Board, NewBoard).
+
+captureOponentPiece(Board, NewBoard2, 2, AiLevel):-
+  player(P),
+  ((P == 1, brownCounter(BC), BC1 is BC - 1, asserta(brownCounter(BC1)), retract(brownCounter(BC))) ;
+  (P == 2, whiteCounter(WC), WC1 is WC - 1, asserta(whiteCounter(WC1)), retract(whiteCounter(WC)))),
+  (whiteCounter(WC2), brownCounter(BC2), WC2 =\= 0, BC2 =\= 0),
+  repeat,
+    ((P == 1, nl, nl, write('Brown place your barragoon piece'), nl) ;
+    (P == 2, nl, nl, write('White place your barragoon piece'), nl)),
+    getBarragoonCoords(Column, Line, BarragoonFace),
+    getPiece(Board, Line, Column, Piece),
+    ((Piece == 00) ; nl, nl, write('WARNING! Place chosen isn\'t empty!'), nl, nl, fail),
+  !,
+  updateBoard(Line, Column, BarragoonFace, Board, NewBoard),
+  printBoard(NewBoard),
+  repeat,
+    ((P == 1, nl, nl, write('White place your barragoon piece'), nl) ;
+    (P == 2, nl, nl, write('Brown place your barragoon piece'), nl)),
     getBarragoonCoords(Column2, Line2, BarragoonFace2),
     getPiece(NewBoard, Line2, Column2, Piece2),
     ((Piece2 == 00) ; nl, nl, write('WARNING! Place chosen isn\'t empty!'), nl, nl, fail),
@@ -111,7 +181,7 @@ captureOponentPiece(Board, NewBoard2):-
 
 tellPlayerToPlay(_):-
   ((player(P), P == 1, write('White turn!')) ;
-   (player(P), P == 2, write('Brown turn!'))), nl.
+   (player(P), P == 2, write('Brown turn!'))), nl, nl.
 
 getPieceCurCoords(X, Y):-
   repeat,
@@ -201,8 +271,6 @@ validateMoveNoMessages(Board, Line, Column, NewLine, NewColumn, Player):-
 
 checkNewPosPiece(Board, NewLine, NewColumn, Player):-
   getPiece(Board, NewLine, NewColumn, NewPiece),
-  write(NewColumn), write('   '), write(NewLine),nl,
-  write(NewPiece),
   (((Player == 1, (NewPiece =\= 12 , NewPiece =\= 13 , NewPiece =\= 14)) ;
    (Player == 2, (NewPiece =\= 22 , NewPiece =\= 23 , NewPiece =\= 24))) ;
    nl, write('WARNING! Cannot capture your own pieces!'), nl, nl, !, fail).
@@ -374,18 +442,13 @@ verifyPieceInTheWayNoMessages(Line, Column, NewLine, NewColumn, Board):-
 % PARTE MAIS LIXADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 
-getValidMoves(Board, ValidMoves) :-
+getValidMoves(Board, ValidMoves, Player) :-
+    (setof([[NewLine, NewCol], [PieceLine, PieceCol]],(getPlayerPieces(Board, Player, PieceCol, PieceLine),
+    validateMoveNoMessages(Board, PieceLine, PieceCol, NewLine, NewCol, Player)), ValidMoves) ; true).
 
-    player(P),
-    ((P==1, P1 is 2); (P==2, P1 is 1)),
-    (setof([[NewLine, NewCol], [PieceLine, PieceCol]],(getPlayerPieces(Board, P1, PieceCol, PieceLine),
-    validateMoveNoMessages(Board, PieceLine, PieceCol, NewLine, NewCol, P1)), ValidMoves) ; true).
-
-getValuedValidMoves(Board, ValidMoves):-
-    player(P),
-    ((P==1, brownCounter(PC), P1 is 2); (P==2, whiteCounter(PC), P1 is 1)),
-    (setof([[Value, NewLine, NewCol], [PieceLine, PieceCol]],(getPlayerPieces(Board, P1, PieceCol, PieceLine),
-    validateMoveNoMessages(Board, PieceLine, PieceCol, NewLine, NewCol, P1), setMoveValue(Board, NewLine, NewCol, Value))
+getValuedValidMoves(Board, ValidMoves, Player):-
+    (setof([[Value, NewLine, NewCol], [PieceLine, PieceCol]],(getPlayerPieces(Board, Player, PieceCol, PieceLine),
+    validateMoveNoMessages(Board, PieceLine, PieceCol, NewLine, NewCol, Player), setMoveValue(Board, NewLine, NewCol, Value))
     , ValidMoves) ; true).
 
 getPlayerPieces(Board, Player, Col, Line):-
