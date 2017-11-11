@@ -9,8 +9,8 @@
 % ##################### Menus ######################
 
 menu:-
-    asserta(aiLevel(0)),
-    asserta(modeGame(0)),
+    asserta(aiLevel(1)),
+    asserta(modeGame(1)),
     main_menu.
 
 main_menu:- cls,
@@ -26,7 +26,7 @@ main_menu:- cls,
   menu_option(1).
 
 main_menu_option(Op):- (Op < 1 ; Op > 3), nl, nl, write('WARNING!!! Please insert an option between 1 and 3!'),nl ,nl, menu_option(1).
-main_menu_option(1):- startGame.  % Starts the game
+main_menu_option(1):- modeGame(MG), aiLevel(AI), startGame(MG, AI).  % Starts the game
 main_menu_option(2):- menu_mode.  % Opens the menu for the mode choice
 main_menu_option(3):- halt. % Stops the program
 
