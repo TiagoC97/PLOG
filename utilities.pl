@@ -19,7 +19,7 @@ getChar(C):- get_char(C), char_code(C, C1), ite(C1 == 10, !, waitNewLine).
 
 % Implementation of an if statement
 
-ite(If, Then, Else):- If, !, Then.
+ite(If, Then, _Else):- If, !, Then.
 ite(_, _, Else):- Else.
 
 % Determine if a given Play is even or odd
@@ -36,18 +36,22 @@ getCoordsFromList(List, N, Line, Col):-
     nth1(1, Coords, Line),
     nth1(2, Coords, Col).
 
-
+% Checks if a given line is valid
 checkLine(Line):-
   (Line >= 1, Line =< 9);
   nl, write('WARNING! Line must be between 1 and 9!'), nl, nl, !, fail.
 
+% Checks if a given column is valid
 checkColumn(Column):-
   (Column >= 1, Column =< 7);
   nl, write('WARNING! Column must be between 1 and 7!'), nl, nl, !, fail.
 
+% Checks if a given barragoon face is valid
 checkBarragoonFace(Face):-
   ((Face >= 30, Face =< 37) ; (Face >= 40, Face =< 47)) ;
   nl, write('WARNING! Please insert a valid barragoon face!'), nl, nl, !, fail.
+
+% Functions used to update the game board. Putting a given piece in a given place.
 
 updateBoard(1, Column, Piece, [FirstLine|OtherLines], [NewFirstLine|OtherLines]):-
 	updateBoardOneList(Column, Piece, FirstLine, NewFirstLine).
@@ -65,3 +69,7 @@ updateBoardOneList(Column, Piece, [Head|Tail], [Head|NewTail]):-
   removeElementsFromlist([], _, []).
   removeElementsFromlist([H|Tail], L2, Rest):- member(H, L2), !, removeElementsFromlist(Tail, L2, Rest).
   removeElementsFromlist([H|Tail], L2, [H|Rest]):- removeElementsFromlist(Tail, L2, Rest).
+
+% Implementation of the Not predicate
+not(X):- X, !, fail.
+not(_X).
