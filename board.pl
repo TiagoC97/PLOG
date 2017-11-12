@@ -1,3 +1,5 @@
+% Creates the initial board
+
 initialBoard([
 [00, 24, 23, 00, 23, 24, 00],
 [00, 00, 22, 23, 22, 00, 00],
@@ -8,6 +10,8 @@ initialBoard([
 [00, 00, 00, 00, 00, 00, 00],
 [00, 00, 12, 13, 12, 00, 00],
 [00, 14, 13, 00, 13, 14, 00]]).
+
+% Prints the board
 
 printBoard(Board) :-
 printCoordsX,

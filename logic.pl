@@ -48,13 +48,13 @@ play_cicle(Board, Mode, AiLevel):-
   play_cicle(NewBoard, Mode, AiLevel).
 
 % Predicate used for game end verification.
-% First it checks if any of the players has any pieces left, if so, the game continues, otherwise the game ends.
-% Then it gets each player valid moves and checks if any of those is empty,
-% if not, the game continues, otherwise the game ends.
+% First it checks if any of the players has any pieces left, if so, the game continues,
+% otherwise the game ends. Then it gets each player valid moves and checks if
+% any of those is empty, if not, the game continues, otherwise the game ends.
 
 verifyEndGame(Board):-
-  (((whiteCounter(WC), (WC == 0),!,  nl, write('Brown won'), nl, nl) ;
-  (brownCounter(BC), (BC == 0),!,  nl, write('White won'), nl, nl)),
+  (((whiteCounter(WC), (WC == 0),!, nl, write('Brown won'), nl, nl) ;
+  (brownCounter(BC), (BC == 0),!, nl, write('White won'), nl, nl)),
   !,fail);
   player(P),
   ((P==1, P1 is 2); (P==2, P1 is 1)),
@@ -63,8 +63,10 @@ verifyEndGame(Board):-
   (getValidMoves(Board, ValidMovesOp, P1) ; true),
   length(ValidMovesOp, NumValidMovesOp),
   (((NumValidMovesPl == 0 ; NumValidMovesOp == 0),
-  ((P == 1, ((NumValidMovesPl == 0, nl, write('Brown won')) ; (NumValidMovesOp == 0, nl, write('White won'))), nl, nl) ;
-  (P == 2, ((NumValidMovesPl == 0, nl, write('White won')) ; (NumValidMovesOp == 0, nl, write('Brown won'))), nl, nl)), !, fail) ; true).
+  ((P == 1, ((NumValidMovesPl == 0, nl, write('Brown won')) ;
+  (NumValidMovesOp == 0, nl, write('White won'))), nl, nl) ;
+  (P == 2, ((NumValidMovesPl == 0, nl, write('White won')) ;
+  (NumValidMovesOp == 0, nl, write('Brown won'))), nl, nl)), !, fail) ; true).
 
 % Predicate that updates the player
 
@@ -146,7 +148,8 @@ get_play(Board, Line, Column, NewLine, NewColumn):-
     validateMove(Board, Line, Column, NewLine, NewColumn, P),
   !.
 
-% Predicate that is called when the AiLevel is 1 and starts with showing in the screen which player turn is it.
+% Predicate that is called when the AiLevel is 1 and starts with showing in the screen
+% which player turn is it.
 % Then gets the player valid moves, checks if there is more than one and if there is,
 % it creates a random number between 1 and the number of valid moves, getting the
 % correspondent piece coordinates and new coordinates to move it to.
@@ -157,7 +160,8 @@ getAiPlay(Board, Line, Column, NewLine, NewColumn, 1):-
   player(P),
   getValidMoves(Board, ValidMoves, P),
   length(ValidMoves, NumValidMoves),
-  ((NumValidMoves == 1, PosValidMoves is NumValidMoves);(NumValidMoves =\= 1, random(1, NumValidMoves, PosValidMoves))),
+  ((NumValidMoves == 1, PosValidMoves is NumValidMoves);
+  (NumValidMoves =\= 1, random(1, NumValidMoves, PosValidMoves))),
   nth1(PosValidMoves, ValidMoves, Move),
   nth1(1, Move, NewPlace),
   nth1(2, Move, Piece),
@@ -166,7 +170,8 @@ getAiPlay(Board, Line, Column, NewLine, NewColumn, 1):-
   nth1(1, NewPlace, NewLine),
   nth1(2, NewPlace, NewColumn).
 
-% Predicate that is called when the AiLevel is 2 or 3 and starts with showing in the screen which player turn is it.
+% Predicate that is called when the AiLevel is 2 or 3 and starts with showing in the screen
+% which player turn is it.
 % Then gets the player valued valid moves, checks if there is more than one and if there is,
 % it then checks if the most valuable play has a value equal to 0 and if it does,
 % it creates a random number between 1 and the number of valid moves, getting the
@@ -183,14 +188,11 @@ getAiPlay(Board, Line, Column, NewLine, NewColumn, _):-
     nth1(NumValidMoves, ValidMoves, MoveCheck),
     nth1(1, MoveCheck, NewPlaceCheck),
     nth1(1, NewPlaceCheck, Value),
-    (
-      (Value == 0,
+    ((Value == 0,
       random(1, NumValidMoves, RandomMoveNum),
-      nth1(RandomMoveNum, ValidMoves, Move))
-      ;
+      nth1(RandomMoveNum, ValidMoves, Move));
       nth1(NumValidMoves, ValidMoves, Move)
     )),
-
     nth1(1, Move, NewPlace),
     nth1(1, Move, NewPlace),
     nth1(1, NewPlace, Value),
@@ -210,7 +212,8 @@ move(Board, NewBoard3, Line, Column, NewLine, NewColumn, Mode, AiLevel):-
   getPiece(Board, NewLine, NewColumn, NewPiece),
   updateBoard(Line, Column, 00, Board, NewBoard),
   updateBoard(NewLine, NewColumn, Piece, NewBoard, NewBoard2),
-  (((NewPiece =\= 00), !, printBoard(NewBoard2), !, nl, verifyTypeNewPiece(NewPiece, NewBoard2, NewBoard3, Mode, AiLevel)) ; NewBoard3 = NewBoard2).
+  (((NewPiece =\= 00), !, printBoard(NewBoard2), !, nl, verifyTypeNewPiece(NewPiece, NewBoard2, NewBoard3, Mode, AiLevel));
+   NewBoard3 = NewBoard2).
 
 % Predicate to check the type of piece that was on the new coordinates.
 % It first verifies if it was a Barragoon and then checks if the game ends with this move. If not, the predicate captureBarragoon is called.
@@ -432,13 +435,10 @@ getRandomBarragoonFace(Face):-
 % Predicate that is used to get a Barragoon place and face, chosen in a smart way.
 % First, it retrieves the opponnent moves size.
 % Then, it gets the most valuable play of those.
-% After that, it gets the coordinates of that and generates a random number between 1 and 5.
-% In case the Line of that move is greater than 5, or the Line is 5 and the current player is 2,
-% the Barragoon will be placed above that Line, as long as the new coordinates are free, and the face
-% will be chosen accordingly.
-% In case the Line of that move is less than 5, or the Line is 5 and the current player is 1,
-% the Barragoon will be placed under that Line, as long as the new coordinates are free, and the face
-% will be chosen accordingly.
+% After that, it gets the coordinates of that and generates a random number between 1 and 4.
+% It tries to place a barragoon in an adjacent position to the opponent piece that has the best play,
+% in order to stop that move.
+% The barragoon face is chosen accordingly
 % If the new coordinates are not free, the predicate getRandomBarragoonPiece is called to generate
 % a random place and face for the Barragoon.
 
@@ -446,26 +446,87 @@ getBarragoonPieceSmartBot(Board, OpponnentMoves, Line, Column, Piece):-
      (length(OpponnentMoves, SizeMoves),
      nth1(SizeMoves, OpponnentMoves, BestPlay),
      nth1(2, BestPlay, Pos),
-     nth1(1, Pos, LineAux),
-     nth1(2, Pos, Column),
-     random(1, 5, Num),
-     player(Player),
-     (((LineAux > 5; (LineAux == 5, Player == 2)), Line is LineAux - 1,
-     getPiece(Board, Line, Column, Piece1), Piece1 == 0,
+     nth1(1, Pos, PieceLine),
+     nth1(2, Pos, PieceCol),
+     nth1(1, BestPlay, NewPos),
+     nth1(2, NewPos, NewLine),
+     nth1(3, NewPos, NewCol),
+     random(1, 4, Num),
+
+     ((PieceLine == NewLine, PieceCol > NewCol, Line is PieceLine, Column is PieceCol - 1, getPiece(Board, Line, Column, Piece1), Piece1 == 0,
+     ((Num == 1, Piece is 30);
+     (Num == 2, Piece is 32);
+     (Num == 3, Piece is 40);
+     (Num == 4, Piece is 46)));
+
+     (PieceLine == NewLine, PieceCol < NewCol, Line is PieceLine, Column is PieceCol + 1, getPiece(Board, Line, Column, Piece1), Piece1 == 0,
+     ((Num == 1, Piece is 30);
+     (Num == 2, Piece is 33);
+     (Num == 3, Piece is 42);
+     (Num == 4, Piece is 44)));
+
+     (PieceLine > NewLine, PieceCol == NewCol, Line is PieceLine - 1, Column is PieceCol, getPiece(Board, Line, Column, Piece1), Piece1 == 0,
      ((Num == 1, Piece is 30);
      (Num == 2, Piece is 34);
      (Num == 3, Piece is 41);
-     (Num == 4, Piece is 45);
-     (Num == 5, Piece is 37))
-     );
-     ((LineAux < 5; (LineAux == 5, Player == 1)), Line is LineAux + 1,
-     getPiece(Board, Line, Column, Piece1), Piece1 == 0,
+     (Num == 4, Piece is 45)));
+
+     (PieceLine < NewLine, PieceCol == NewCol, Line is PieceLine + 1, Column is PieceCol, getPiece(Board, Line, Column, Piece1), Piece1 == 0,
      ((Num == 1, Piece is 30);
      (Num == 2, Piece is 31);
      (Num == 3, Piece is 43);
-     (Num == 4, Piece is 47);
-     (Num == 5, Piece is 37))
-     )));
+     (Num == 4, Piece is 47)));
+
+
+     (PieceLine > NewLine, PieceCol > NewCol,
+     ((Line is PieceLine - 1, Column is PieceCol, getPiece(Board, Line, Column, Piece1), Piece1 == 0,
+     ((Num == 1, Piece is 30);
+     (Num == 2, Piece is 34);
+     (Num == 3, Piece is 41);
+     (Num == 4, Piece is 45)));
+     (Line is PieceLine, Column is PieceCol - 1, getPiece(Board, Line, Column, Piece1), Piece1 == 0,
+     ((Num == 1, Piece is 30);
+     (Num == 2, Piece is 32);
+     (Num == 3, Piece is 40);
+     (Num == 4, Piece is 46)))));
+
+     (PieceLine > NewLine, PieceCol < NewCol,
+     ((Line is PieceLine - 1, Column is PieceCol, getPiece(Board, Line, Column, Piece1), Piece1 == 0,
+     ((Num == 1, Piece is 30);
+     (Num == 2, Piece is 34);
+     (Num == 3, Piece is 41);
+     (Num == 4, Piece is 45)));
+     (Line is PieceLine, Column is PieceCol + 1, getPiece(Board, Line, Column, Piece1), Piece1 == 0,
+     ((Num == 1, Piece is 30);
+     (Num == 2, Piece is 33);
+     (Num == 3, Piece is 42);
+     (Num == 4, Piece is 44)))));
+
+     (PieceLine < NewLine, PieceCol > NewCol,
+     ((Line is PieceLine + 1, Column is PieceCol, getPiece(Board, Line, Column, Piece1), Piece1 == 0,
+     ((Num == 1, Piece is 30);
+     (Num == 2, Piece is 31);
+     (Num == 3, Piece is 43);
+     (Num == 4, Piece is 47)));
+     (Line is PieceLine, Column is PieceCol - 1, getPiece(Board, Line, Column, Piece1), Piece1 == 0,
+     ((Num == 1, Piece is 30);
+     (Num == 2, Piece is 32);
+     (Num == 3, Piece is 40);
+     (Num == 4, Piece is 46)))));
+
+     (PieceLine < NewLine, PieceCol < NewCol,
+     ((Line is PieceLine + 1, Column is PieceCol, getPiece(Board, Line, Column, Piece1), Piece1 == 0,
+     ((Num == 1, Piece is 30);
+     (Num == 2, Piece is 31);
+     (Num == 3, Piece is 43);
+     (Num == 4, Piece is 47)));
+     (Line is PieceLine, Column is PieceCol + 1, getPiece(Board, Line, Column, Piece1), Piece1 == 0,
+     ((Num == 1, Piece is 30);
+     (Num == 2, Piece is 33);
+     (Num == 3, Piece is 42);
+     (Num == 4, Piece is 44)))))));
+
+
      getRandomBarragoonPiece(Board, Line, Column, Piece).
 
 % Predicate that shows in the screen whose turn is it.
@@ -551,7 +612,8 @@ checkPieceFromCurrentPlayer(Board, Line, Column):-
 % Predicate that is used to validate a move.
 % First it retrieves the piece from the given coordinates for it.
 % Then it verifies if the new coordinates contain a piece that belongs to the current player.
-% After that, it retrieves the whatever the new coordinates contain and calls the predicate verifyNewPosInRange and the predicate verifyPieceInTheWay.
+% After that, it retrieves the whatever the new coordinates contain and calls the predicate
+% verifyNewPosInRange and the predicate verifyPieceInTheWay.
 
 validateMove(Board, Line, Column, NewLine, NewColumn, Player):-
   getPiece(Board, Line, Column, Piece),
@@ -565,7 +627,8 @@ validateMove(Board, Line, Column, NewLine, NewColumn, Player):-
 % Predicate that is used to validate a move for the bots (without showing messages).
 % First it retrieves the piece from the given coordinates for it.
 % Then it verifies if the new coordinates contain a piece that belongs to the current player.
-% After that, it retrieves the whatever the new coordinates contain and calls the predicate verifyNewPosInRange and the predicate verifyPieceInTheWay.
+% After that, it retrieves the whatever the new coordinates contain and calls the predicate
+% verifyNewPosInRange and the predicate verifyPieceInTheWay.
 
 validateMoveNoMessages(Board, Line, Column, NewLine, NewColumn, Player):-
   getPiece(Board, Line, Column, Piece),
@@ -706,6 +769,35 @@ verifyNewPosInRangeNoMessages(NewPiece, Piece, Line, Column, NewLine, NewColumn)
       ((NewColumn =:= Column), ((NewLine =:= Line + 4); (NewLine =:= Line - 4)));
       !, fail)).
 
+% Predicate that is used to check if a given play is long move.
+% This is called in the bots moves validation, therefore no messages are shown.
+
+verifyLongMoveNoMessages(Board, Line, Column, NewLine, NewColumn):-
+  getPiece(Board, Line, Column, Piece),
+  getPiece(Board, NewLine, NewColumn, NewPiece),
+
+  (((Piece == 12 ; Piece == 22),
+      (((NewPiece == 37), !, fail);
+      ((((NewLine =:= Line + 1); (NewLine =:= Line - 1)),
+      ((NewColumn =:= Column + 1); (NewColumn =:= Column - 1)));
+      ((NewLine =:= Line), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
+      ((NewColumn =:= Column), ((NewLine =:= Line + 2); (NewLine =:= Line - 2)));
+      !, fail)));
+
+  ((Piece == 13 ; Piece == 23),
+      ((((NewLine =:= Line + 1); (NewLine =:= Line - 1)), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
+      (((NewColumn =:= Column + 1); (NewColumn =:= Column - 1)), ((NewLine =:= Line + 2); (NewLine =:= Line - 2)));
+      ((NewLine =:= Line), ((NewColumn =:= Column + 3); (NewColumn =:= Column - 3)));
+      ((NewColumn =:= Column), ((NewLine =:= Line + 3); (NewLine =:= Line - 3)));
+      !, fail));
+
+  ((Piece == 14 ; Piece == 24),
+      ((((NewLine =:= Line + 1); (NewLine =:= Line - 1)), ((NewColumn =:= Column + 3); (NewColumn =:= Column - 3)));
+      (((NewColumn =:= Column + 1); (NewColumn =:= Column - 1)), ((NewLine =:= Line + 3); (NewLine =:= Line - 3)));
+      (((NewLine =:= Line + 2); (NewLine =:= Line - 2)), ((NewColumn =:= Column + 2); (NewColumn =:= Column - 2)));
+      ((NewLine =:= Line), ((NewColumn =:= Column + 4); (NewColumn =:= Column - 4)));
+      ((NewColumn =:= Column), ((NewLine =:= Line + 4); (NewLine =:= Line - 4)));
+      !, fail))).
 
 auxLine(_Line, _Column, _Board, 1).
 auxLine(_Line, _Column, _Board, -1).
@@ -795,31 +887,39 @@ getValidMoves(Board, ValidMoves, Player) :-
 
 % Predicate that uses the setof predicate to get the valid moves for the given player.
 % It also sets a value to each valid move accordingly.
-% But in this case it is checked if the place of destination is one of the oponnents destination as well. If it is, this destination is descarted.
+% But in this case it is checked if the place of destination is one of the oponnents
+% destination as well. If it is, this destination is descarted.
 
-getValuedValidMovesNotAvoidCapture(Board, ValidMoves, Player):-
+getValuedValidMovesAvoidCapture(Board, ValidMoves, Player):-
     ((Player == 1, P1 is 2) ; (Player == 2, P1 is 1)),
     (setof([[Value, NewLine, NewCol], [PieceLine, PieceCol]],(getPlayerPieces(Board, Player, PieceCol, PieceLine),
     validateMoveNoMessages(Board, PieceLine, PieceCol, NewLine, NewCol, Player),
-    checkMoveForInCheckPlace(Board, P1, NewLine, NewCol), setMoveValue(Board, NewLine, NewCol, Value))
-    , ValidMoves) ; true).
+    checkMoveForInCheckPlace(Board, P1, NewLine, NewCol),
+    setMoveValue(Board, NewLine, NewCol, Value)),
+    ValidMoves) ; true).
 
 % Predicate that uses the setof predicate to get the valid moves for the given player.
 % It also sets a value to each valid move accordingly.
 
 getValuedValidMovesNormal(Board, ValidMoves, Player):-
     (setof([[Value, NewLine, NewCol], [PieceLine, PieceCol]],(getPlayerPieces(Board, Player, PieceCol, PieceLine),
-    validateMoveNoMessages(Board, PieceLine, PieceCol, NewLine, NewCol, Player), setMoveValue(Board, NewLine, NewCol, Value))
-    , ValidMoves) ; true).
+    validateMoveNoMessages(Board, PieceLine, PieceCol, NewLine, NewCol, Player),
+    setMoveValue(Board, NewLine, NewCol, Value)),
+    ValidMoves) ; true).
 
 % Predicate that gives the valid moves for the current player.
-% It first gets the valid moves wich d
+% It first gets the valued valid moves wich do not contain in danger destinations.
+% In case this has length = 0, the predicate getValuedValidMovesNormal is called to give the valued valid moves, not avoiding capture.
+% In case this has length > 0, the oponnent valued moves are retrieved and the best oponnent move is analised.
+% If the value of the oponnent best move  is greater than 1 and greater than the value of the current player best move,
+% the returned valid moves will be the ones that allow the piece, in danger of capture by the oponnent, to move to a not in danger destination.
+% If there is none destination that allows that, the returned valid moves will be the ones wich do not contain in danger destinations.
 
 getValuedValidMoves(Board, ValidMoves, Player):-
-    getValuedValidMovesNotAvoidCapture(Board, PlayerMoves, Player),
+    getValuedValidMovesAvoidCapture(Board, PlayerMoves, Player),
     length(PlayerMoves, NumPM),
     ((NumPM == 0, getValuedValidMovesNormal(Board, ValidMoves, Player)) ;
-    ((Player == 1, P1 is 2, getValuedValidMovesNormal(Board, OpponnentMoves, P1)) ; (Player == 2, P1 is 1, getValuedValidMovesNormal(Board, OpponnentMoves, P1))),
+    (((Player == 1, P1 is 2, getValuedValidMovesNormal(Board, OpponnentMoves, P1)) ; (Player == 2, P1 is 1, getValuedValidMovesNormal(Board, OpponnentMoves, P1))),
     length(OpponnentMoves, NumOM),
     nth1(NumOM, OpponnentMoves, BestOpMove),
     nth1(1, BestOpMove, BestOpMoveCoords),
@@ -844,32 +944,45 @@ getValuedValidMoves(Board, ValidMoves, Player):-
 
     setof([[Value, NewLine, NewCol], [PieceLine, PieceCol]],
     (validateMoveNoMessages(Board, PieceLine, PieceCol, NewLine, NewCol, Player),
-    checkElemNotInList(NewLine, NewCol, OpBestPieceMoves, NumOpBestPieceMoves),
+    checkElemNotInList(Board, NewLine, NewCol, OpBestPieceMoves, NumOpBestPieceMoves),
     setMoveValue(Board, NewLine, NewCol, Value)),
     ValidMoves),
+
     length(ValidMoves, NumValidMoves),
     (NumValidMoves > 0)) ;
-    (ValidMoves = PlayerMoves))).
+    (ValidMoves = PlayerMoves)))).
 
-checkElemNotInList(_NewLine, _NewCol, _List, 0).
+checkElemNotInList(_Board, _NewLine, _NewCol, _List, 0).
 
-checkElemNotInList(NewLine, NewCol, List, N):-
+% Predicate that checks if a given element belongs to a list.
+
+checkElemNotInList(Board, NewLine, NewCol, List, N):-
     nth1(N, List, E1),
     nth1(1, E1, Coords),
     nth1(1, Coords, OpLine),
     nth1(2, Coords, OpCol),
-    ((NewLine == OpLine , NewCol == OpCol, !, fail) ; N1 is N - 1, checkElemNotInList(NewLine, NewCol, List, N1)).
+    nth1(2, E1, PieceCoords),
+    nth1(1, PieceCoords, PieceLine),
+    nth1(2, PieceCoords, PieceCol),
+    ((NewLine == OpLine , NewCol == OpCol, verifyLongMoveNoMessages(Board, PieceLine, PieceCol, OpLine, OpCol), !, fail) ;
+    (N1 is N - 1, checkElemNotInList(Board, NewLine, NewCol, List, N1))) .
+
+% Predicate that checks if a given destination is present in the oponnent valid moves list.
 
 checkMoveForInCheckPlace(Board, Player2, NewLine, NewCol):-
     getValidMoves(Board, OpponentMoves, Player2),
     length(OpponentMoves, NumOpMoves),
     !,
-    checkElemNotInList(NewLine, NewCol, OpponentMoves, NumOpMoves).
+    checkElemNotInList(Board, NewLine, NewCol, OpponentMoves, NumOpMoves).
+
+% Predicate that gives the given player pieces.
 
 getPlayerPieces(Board, Player, Col, Line):-
     getPiece(Board, Line, Col, Piece),
     ((Player == 1, (Piece == 12; Piece == 13; Piece == 14));
     (Player == 2, (Piece == 22; Piece == 23; Piece == 24))).
+
+% Predicate that gives a certain move a value, according to the piece present in the destination.
 
 setMoveValue(Board, NewLine, NewCol, Value):-
     getPiece(Board, NewLine, NewCol, Piece),
