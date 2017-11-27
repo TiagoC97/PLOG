@@ -2,28 +2,35 @@
 :- dynamic(player/1).
 :- dynamic(whiteCounter/1).
 :- dynamic(brownCounter/1).
+:- dynamic(movesMade/1).
 
 % Predicate that initiates the game.
 % It is responsible for making reset of all the dynamic predicates in this file,
 % as well as for beggining the play cycle.
 % The Mode represents: 1-> Player vs Player ; 2 -> Player vs CPU ; 3 -> CPU vs CPU
 % The AiLevel represents: 1 -> Easy ; 2-> Medium ; 3 -> Hard
+% The AiStarting represents: 1 -> CPU White ; 2-> Player White, when playing Human vs CPU
+% The AiSecondLevel represents: 1 -> Easy ; 2-> Medium ; 3 -> Hard, for the other CPU (in mode CPU vs CPU)
 
-startGame(Mode, AiLevel) :-
+startGame(Mode, AiLevel, AiStarting, AiSecondLevel) :-
   initialBoard(Board),
   retractall(play_number(_)),
   retractall(player(_)),
   retractall(whiteCounter(_)),
   retractall(brownCounter(_)),
+  retractall(movesMade(_)),
   asserta(play_number(1)),
-  asserta(player(1)),
+  ((AiStarting == 2, asserta(player(1))) ; (AiStarting == 1, asserta(player(2)))),
   asserta(whiteCounter(7)),
   asserta(brownCounter(7)),
-  play_cicle(Board, Mode, AiLevel).
+  asserta(movesMade([])),
+  play_cicle(Board, Mode, AiLevel, AiSecondLevel, AiStarting).
 
 % Predicate that shows the game statistics
 
 showStatistics:-
+    movesMade(Moves),
+    write(Moves),nl,
     play_number(Plays),
     whiteCounter(WC), brownCounter(BC),
     nl, write('Number of plays: '), write(Plays),nl,
@@ -36,16 +43,16 @@ showStatistics:-
 % printing the board, verifying if the as reached an end game state,
 % making the play, updating the player and the play number.
 
-play_cicle(Board, Mode, AiLevel):-
-  printBoard(Board), nl,
-  !,
+play_cicle(Board, Mode, AiLevel, AiSecondLevel, AiStarting):-
+  ((play_number(Play), Play == 1, printBoard(Board), nl,
+  !) ; true),
   verifyEndGame(Board),
   !,
-  play(Board, NewBoard, Mode, AiLevel),
+  play(Board, NewBoard, Mode, AiLevel, AiSecondLevel, AiStarting),
   !,
   nextPlayer(_),
   nextPlay(_),
-  play_cicle(NewBoard, Mode, AiLevel).
+  play_cicle(NewBoard, Mode, AiLevel, AiSecondLevel, AiStarting).
 
 % Predicate used for game end verification.
 % First it checks if any of the players has any pieces left, if so, the game continues,
@@ -86,29 +93,55 @@ nextPlay(_):-
 % Predicate that makes the play in case the game mode is 1 (Player vs Player)
 % It calls the predicate get_play and move
 
-play(Board, NewBoard, 1, _):-
+play(Board, NewBoard2, 1, _, _, _):-
+  play_number(Play),
+  getUndo(Board, NewBoard, Play, NewPlay, _, 1),
+
+  ((NewPlay \= Play,
+  retract(play_number(Play)),
+  asserta(play_number(NewPlay)),
+  ModPlay is mod(NewPlay, 2),
+  player(P),
+  ((ModPlay == 1, P == 2, retract(player(P)), asserta(player(1))) ; ((ModPlay == 0, P == 1, retract(player(P)), asserta(player(2)))))) ; true),
+
   repeat,
-    get_play(Board, Line, Column, NewLine, NewColumn),
+    get_play(NewBoard, Line, Column, NewLine, NewColumn),
   !,
-  move(Board, NewBoard, Line, Column, NewLine, NewColumn, 1, _).
+  move(NewBoard, NewBoard2, Line, Column, NewLine, NewColumn, 1, _, _).
 
 % Predicate that makes the play in case the game mode is 2 (Player vs CPU)
 % It calls the predicate get_play in case the current player is 1
 % and getAiPlay in case the current player is 2.
 % It also calls the move predicate.
 
-play(Board, NewBoard, 2, AiLevel):-
+a(X):-
+    X is mod(7+1, 2).
+
+play(Board, NewBoard2, 2, AiLevel, _, AiStarting):-
+  player(P1),
+
+  play_number(Play),
+  getUndo(Board, NewBoard, Play, NewPlay, _, 1),
+
+  ((NewPlay \= Play,
+  retract(play_number(Play)),
+  asserta(play_number(NewPlay)),
+  ModPlay2 is mod(NewPlay, 2),
+  ((AiStarting == 1, ModPlay is mod(ModPlay2 + 1, 2)) ; ModPlay is ModPlay2),
+  ((ModPlay == 1, retract(player(P1)), asserta(player(1))) ; ((ModPlay == 0, retract(player(P1)), asserta(player(2)))))) ; true),
+
   player(P),
   (
     (
       (P == 1),
       repeat,
-        get_play(Board, Line, Column, NewLine, NewColumn),
+        get_play(NewBoard, Line, Column, NewLine, NewColumn),
       !
     ) ;
     (
       (P == 2),
-      getAiPlay(Board, Line, Column, NewLine, NewColumn, AiLevel),
+
+      getAiPlay(NewBoard, Line, Column, NewLine, NewColumn, AiLevel),
       write('Column of the piece to move: '), write(Column), nl,
       write('Line of the piece to move: '), write(Line), nl,
       write('Column of the new place for the piece to move: '), write(NewColumn), nl,
@@ -117,12 +150,14 @@ play(Board, NewBoard, 2, AiLevel):-
     )
   ),
   !,
-  move(Board, NewBoard, Line, Column, NewLine, NewColumn, 2, AiLevel).
+  move(NewBoard, NewBoard2, Line, Column, NewLine, NewColumn, 2, AiLevel, _).
 
 % Predicate that makes the play in case the game mode is 3 (CPU vs CPU)
 % It calls the predicates getAiPlay and move.
 
-play(Board, NewBoard, 3, AiLevel):-
+play(Board, NewBoard, 3, AiLevel, AiSecondLevel, _):-
+    player(P),
+    ((P == 1,
     getAiPlay(Board, Line, Column, NewLine, NewColumn, AiLevel),
         write('Column of the piece to move: '), write(Column), nl,
         write('Line of the piece to move: '), write(Line), nl,
@@ -130,7 +165,16 @@ play(Board, NewBoard, 3, AiLevel):-
         write('Line of the new place for the piece to move: '), write(NewLine), nl,nl,
         write('Press any key to continue: '), getChar(_), nl,
     !,
-    move(Board, NewBoard, Line, Column, NewLine, NewColumn, 3, AiLevel).
+    move(Board, NewBoard, Line, Column, NewLine, NewColumn, 3, AiLevel, AiSecondLevel)) ;
+    (P == 2,
+    getAiPlay(Board, Line, Column, NewLine, NewColumn, AiSecondLevel),
+        write('Column of the piece to move: '), write(Column), nl,
+        write('Line of the piece to move: '), write(Line), nl,
+        write('Column of the new place for the piece to move: '), write(NewColumn), nl,
+        write('Line of the new place for the piece to move: '), write(NewLine), nl,nl,
+        write('Press any key to continue: '), getChar(_), nl,
+    !,
+    move(Board, NewBoard, Line, Column, NewLine, NewColumn, 3, AiLevel, AiSecondLevel))).
 
 % Predicate that shows in the screen which player turn is it.
 % Then it asks for the player piece coordinates
@@ -158,7 +202,7 @@ get_play(Board, Line, Column, NewLine, NewColumn):-
 getAiPlay(Board, Line, Column, NewLine, NewColumn, 1):-
   tellPlayerToPlay(_),
   player(P),
-  getValidMoves(Board, ValidMoves, P),
+  (getValidMoves(Board, ValidMoves, P) ; true),
   length(ValidMoves, NumValidMoves),
   ((NumValidMoves == 1, PosValidMoves is NumValidMoves);
   (NumValidMoves =\= 1, random(1, NumValidMoves, PosValidMoves))),
@@ -207,13 +251,14 @@ getAiPlay(Board, Line, Column, NewLine, NewColumn, _):-
 % If not, the predicate returns true.
 % If they had, the board, after the moves, is printed and it is called a predicate to check the type of piece it was.
 
-move(Board, NewBoard3, Line, Column, NewLine, NewColumn, Mode, AiLevel):-
+move(Board, NewBoard3, Line, Column, NewLine, NewColumn, Mode, AiLevel, AiSecondLevel):-
   getPiece(Board, Line, Column, Piece),
   getPiece(Board, NewLine, NewColumn, NewPiece),
   updateBoard(Line, Column, 00, Board, NewBoard),
   updateBoard(NewLine, NewColumn, Piece, NewBoard, NewBoard2),
-  (((NewPiece =\= 00), !, printBoard(NewBoard2), !, nl, verifyTypeNewPiece(NewPiece, NewBoard2, NewBoard3, Mode, AiLevel));
-   NewBoard3 = NewBoard2).
+  printBoard(NewBoard2),
+  (((NewPiece =\= 00), !, verifyTypeNewPiece(Line, Column, Piece, NewLine, NewColumn, NewPiece, NewBoard2, NewBoard3, Mode, AiLevel, AiSecondLevel));
+   (addMadeMove(0, Line, Column, Piece, NewLine, NewColumn, NewPiece), NewBoard3 = NewBoard2)).
 
 % Predicate to check the type of piece that was on the new coordinates.
 % It first verifies if it was a Barragoon and then checks if the game ends with this move. If not, the predicate captureBarragoon is called.
@@ -221,14 +266,17 @@ move(Board, NewBoard3, Line, Column, NewLine, NewColumn, Mode, AiLevel):-
 % It checks who is the current player, and subtracts one to the number of the opponent pieces.
 % Then it checks if the game ends with this move. If not, the predicate captureOponentPiece is called.
 
-verifyTypeNewPiece(NewPiece, Board, NewBoard, Mode, AiLevel):-
-  ((((NewPiece >= 30) , (NewPiece =< 37)) ; ((NewPiece >= 40) , (NewPiece =< 47))), !, verifyEndGame(Board),
-  captureBarragoon(Board, NewBoard, Mode, AiLevel)) ;
-  (
+verifyTypeNewPiece(Line, Column, Piece, NewLine, NewColumn, NewPiece, Board, NewBoard, Mode, AiLevel, AiSecondLevel):-
   player(P),
-  ((P == 1, brownCounter(BC), BC1 is BC - 1, asserta(brownCounter(BC1)), retract(brownCounter(BC))) ;
-  (P == 2, whiteCounter(WC), WC1 is WC - 1, asserta(whiteCounter(WC1)), retract(whiteCounter(WC)))),
-  !, verifyEndGame(Board),  captureOponentPiece(Board, NewBoard, Mode, AiLevel)).
+  (((((NewPiece >= 30) , (NewPiece =< 37)) ; ((NewPiece >= 40) , (NewPiece =< 47))), addMadeMove(0, Line, Column, Piece, NewLine, NewColumn, NewPiece),
+  !, verifyEndGame(Board),
+  ((Mode == 3, ((P == 1, captureBarragoon(Board, NewBoard, Mode, AiLevel)) ; (P == 2, captureBarragoon(Board, NewBoard, Mode, AiSecondLevel))));
+   repeat,
+    captureBarragoon(Board, NewBoard, Mode, AiLevel),
+   !)) ;
+  (((P == 1, brownCounter(BC), BC1 is BC - 1, asserta(brownCounter(BC1)), retract(brownCounter(BC)), addMadeMove(1, Line, Column, Piece, NewLine, NewColumn, NewPiece)) ;
+  (P == 2, whiteCounter(WC), WC1 is WC - 1, asserta(whiteCounter(WC1)), retract(whiteCounter(WC)), addMadeMove(2, Line, Column, Piece, NewLine, NewColumn, NewPiece))),
+  !, verifyEndGame(Board), !, captureOponentPiece(Board, NewBoard, Mode, AiLevel, AiSecondLevel))).
 
 % Predicate that is called when Mode is 1 (Player vs Player)
 % It asks the current player for the coordinates to place the Barragoon.
@@ -237,12 +285,15 @@ verifyTypeNewPiece(NewPiece, Board, NewBoard, Mode, AiLevel):-
 % it is made an update board to place the Barragoon in the desired place.
 
 captureBarragoon(Board, NewBoard, 1, _):-
-  repeat,
-    getBarragoonCoords(Column, Line, BarragoonFace),
-    getPiece(Board, Line, Column, Piece),
-    ((Piece == 00) ; nl, nl, write('WARNING! Place chosen isn\'t empty!'), nl, nl, fail),
-  !,
-  updateBoard(Line, Column, BarragoonFace, Board, NewBoard).
+    repeat,
+      getBarragoonCoords(Column, Line, BarragoonFace),
+      getPiece(Board, Line, Column, Piece),
+      ((Piece == 00) ; nl, nl, write('WARNING! Place chosen isn\'t empty!'), nl, nl, fail),
+    !,
+    addMadeMove(3, _, _, _, Line, Column, BarragoonFace),
+    updateBoard(Line, Column, BarragoonFace, Board, NewBoard),
+    printBoard(NewBoard), nl,
+    ((getUndo(Board, _, _, _, Repeat, 2), ((Repeat == 1, !, fail) ; true)) ; true).
 
 % Predicate that is called when Mode is 2 (Player vs CPU).
 % If the current player is Human, it asks him for the coordinates and face of the Barragoon to place, validating the coordinates and that the selected place is empty.
@@ -267,7 +318,10 @@ captureBarragoon(Board, NewBoard, 2, AiLevel):-
     nl, write('Column of the place for the barragoon: '), write(Column), nl,
     write('Line of the place for the barragoon: '), write(Line), nl, nl,
     write('Press any key to continue: '), getChar(_), nl)),
-  updateBoard(Line, Column, BarragoonFace, Board, NewBoard).
+  addMadeMove(3, _, _, _, Line, Column, BarragoonFace),
+  updateBoard(Line, Column, BarragoonFace, Board, NewBoard),
+  printBoard(NewBoard), nl, !,
+  ((P == 1, getUndo(Board, _, _, _, Repeat, 2), ((Repeat == 1, !, fail) ; true)) ; (P == 2, true)).
 
 % Predicate that is called when Mode is 3 (CPU vs CPU).
 % First the AiLevel is checked. If the AiLevel is 1 or 2, a random Barragoon place and face is selected.
@@ -283,35 +337,31 @@ captureBarragoon(Board, NewBoard, 3, AiLevel):-
       nl,write('Column of the place for the barragoon: '), write(Column), nl,
       write('Line of the place for the barragoon: '), write(Line), nl, nl,
       write('Press any key to continue: '), getChar(_), nl,
-    updateBoard(Line, Column, BarragoonFace, Board, NewBoard).
+    addMadeMove(3, _, _, _, Line, Column, BarragoonFace),
+    updateBoard(Line, Column, BarragoonFace, Board, NewBoard),
+    printBoard(NewBoard), !.
 
-% Predicate that is called when the Mode is 1 (Player vs Player).
+% Predicate that is called by the captureOponentPiece predicate, when the Mode is 1 (Player vs Player).
 % First it asks the current player for the coordinates and face of the Barragoon to place, validating the coordinates and that the selected place is empty.
 % Then it updates the board, to place the Barragoon.
 % Then it also asks the opponent for the coordinates and face of the Barragoon to place, validating the coordinates and that the selected place is empty.
 % Then it makes the update board again to place the new Barragoon.
+% It also displays the option of undoing the barragoon placement, as well as adding that to the list of made moves.
 
-captureOponentPiece(Board, NewBoard2, 1, _):-
-  player(P),
+captureOponentPieceAux(P, Board, NewBoard, _, _, 1):-
   repeat,
-    ((P == 1, nl, nl, write('Brown place your barragoon piece'), nl) ;
-    (P == 2, nl, nl, write('White place your barragoon piece'), nl)),
-    getBarragoonCoords(Column, Line, BarragoonFace),
-    getPiece(Board, Line, Column, Piece),
-    ((Piece == 00) ; nl, nl, write('WARNING! Place chosen isn\'t empty!'), nl, nl, fail),
+  ((P == 1, nl, nl, write('Brown place your barragoon piece'), nl) ;
+  (P == 2, nl, nl, write('White place your barragoon piece'), nl)),
+  getBarragoonCoords(Column, Line, BarragoonFace),
+  getPiece(Board, Line, Column, Piece),
+  ((Piece == 00) ; nl, nl, write('WARNING! Place chosen isn\'t empty!'), nl, nl, fail),
   !,
+  addMadeMove(3, _, _, _, Line, Column, BarragoonFace),
   updateBoard(Line, Column, BarragoonFace, Board, NewBoard),
   printBoard(NewBoard),
-  repeat,
-    ((P == 1, nl, nl, write('White place your barragoon piece'), nl) ;
-    (P == 2, nl, nl, write('Brown place your barragoon piece'), nl)),
-    getBarragoonCoords(Column2, Line2, BarragoonFace2),
-    getPiece(NewBoard, Line2, Column2, Piece2),
-    ((Piece2 == 00) ; nl, nl, write('WARNING! Place chosen isn\'t empty!'), nl, nl, fail),
-  !,
-  updateBoard(Line2, Column2, BarragoonFace2, NewBoard, NewBoard2).
+  ((getUndo(Board, _, _, _, Repeat, 2), ((Repeat == 1, !, fail) ; true)) ; true).
 
-% Predicate that is called when the Mode is 2 (Player vs CPU).
+% Predicate that is called by the captureOponentPiece predicate, when the Mode is 2 (Player vs CPU).
 % It checks if the current player is Human or CPU. If it is the Human, the AiLevel is checked.
 % If the AiLevel is 1 or 2, a random Barragoon place and face is selected.
 % If the AiLevel is 3, the predicate getBarragoonPieceSmartBot is called, with the opponent valid moves, to get a smart placement for the Barragoon.
@@ -322,9 +372,9 @@ captureOponentPiece(Board, NewBoard2, 1, _):-
 % If the AiLevel is 3, the predicate getBarragoonPieceSmartBot is called, with the opponent valid moves, to get a smart placement for the Barragoon.
 % If it is the Human, it asks the player for the coordinates and face of the Barragoon to place, validating the coordinates and that the selected place is empty.
 % Then the board is updated, to place the Barragoon.
+% It also displays the option of undoing the barragoon placement when the player is Human, as well as adding that to the list of made moves.
 
-captureOponentPiece(Board, NewBoard2, 2, AiLevel):-
-  player(P),
+captureOponentPieceAux(P, Board, NewBoard, AiLevel, _, 2):-
   repeat,
     (
       (P == 1, nl, nl, write('Brown place your barragoon piece'), nl,
@@ -341,55 +391,69 @@ captureOponentPiece(Board, NewBoard2, 2, AiLevel):-
         ((Piece == 00) ; nl, nl, write('WARNING! Place chosen isn\'t empty!'), nl, nl, fail))
     ),
   !,
+  addMadeMove(3, _, _, _, Line, Column, BarragoonFace),
   updateBoard(Line, Column, BarragoonFace, Board, NewBoard),
-  printBoard(NewBoard),
-  repeat,
-    (
-      (P == 2, nl, nl, write('Brown place your barragoon piece'), nl,
-        (((AiLevel == 1 ; AiLevel == 2), getRandomBarragoonPiece(NewBoard, Line2, Column2, BarragoonFace2));
-        (AiLevel == 3, getValuedValidMoves(NewBoard, ValidMoves2, 1), getBarragoonPieceSmartBot(NewBoard, ValidMoves2, Line2, Column2, BarragoonFace2))),
-        nl, write('Column of the place for the barragoon: '), write(Column2), nl,
-        write('Line of the place for the barragoon: '), write(Line2), nl, nl,
-        write('Press any key to continue: '), getChar(_), nl)
-       ;
+  printBoard(NewBoard), !,
+  ((P == 2, getUndo(Board, _, _, _, Repeat, 2), ((Repeat == 1, !, fail) ; true)) ; (P == 1, true)).
 
-      (P == 1, nl, nl, write('White place your barragoon piece'), nl,
-
-        getBarragoonCoords(Column2, Line2, BarragoonFace2),
-        getPiece(NewBoard, Line2, Column2, Piece2),
-        ((Piece2 == 00) ; nl, nl, write('WARNING! Place chosen isn\'t empty!'), nl, nl, fail))
-    ),
-  !,
-
-  updateBoard(Line2, Column2, BarragoonFace2, NewBoard, NewBoard2).
-
-% Predicate that is called when the Mode is 3 (CPU vs CPU).
+% Predicate that is called by the captureOponentPiece predicate, when the Mode is 3 (CPU vs CPU).
 % First it checks the AiLevel. If it is 1 or 2, a random Barragoon place and face is selected for the opponent player.
 % If the AiLevel is 3, the predicate getBarragoonPieceSmartBot is called, with the current valid moves, to get a smart placement for the Barragoon.
 % Then the board is updated, to place the Barragoon.
 % After that, the AiLevel is checked. If it is 1 or 2, a random Barragoon place and face is selected for the current player.
 % If the AiLevel is 3, the predicate getBarragoonPieceSmartBot is called, with the opponnent valid moves, to get a smart placement for the Barragoon.
 % Then the board is updated, to place the Barragoon.
+% It also adds the barragoon placement to the list of made moves.
 
-captureOponentPiece(Board, NewBoard2, 3, AiLevel):-
-    player(P),
-    ((P == 1, nl, nl, write('Brown place your barragoon piece'), nl) ; (P == 2, nl, nl, write('White place your barragoon piece'), nl)),
-    (((AiLevel == 1 ; AiLevel == 2), getRandomBarragoonPiece(Board, Line, Column, BarragoonFace));
-    (AiLevel == 3, getValuedValidMoves(Board, ValidMoves, P), getBarragoonPieceSmartBot(Board, ValidMoves, Line, Column, BarragoonFace))),
-      nl, write('Column of the place for the barragoon: '), write(Column), nl,
-      write('Line of the place for the barragoon: '), write(Line), nl, nl,
-      write('Press any key to continue: '), getChar(_), nl,
+captureOponentPieceAux(P, Board, NewBoard, AiLevel, AiSecondLevel, 3):-
+  ((P == 1, nl, nl, write('Brown place your barragoon piece'), nl,
+  (((AiSecondLevel == 1 ; AiSecondLevel == 2), getRandomBarragoonPiece(Board, Line, Column, BarragoonFace));
+  (AiSecondLevel == 3, getValuedValidMoves(Board, ValidMoves, P), getBarragoonPieceSmartBot(Board, ValidMoves, Line, Column, BarragoonFace))))
+  ;
+  (P == 2, nl, nl, write('White place your barragoon piece'), nl,
+  (((AiLevel == 1 ; AiLevel == 2), getRandomBarragoonPiece(Board, Line, Column, BarragoonFace));
+  (AiLevel == 3, getValuedValidMoves(Board, ValidMoves, P), getBarragoonPieceSmartBot(Board, ValidMoves, Line, Column, BarragoonFace))))),
 
-    updateBoard(Line, Column, BarragoonFace, Board, NewBoard),
-    printBoard(NewBoard),
-    ((P == 2, P1 is 1, nl, nl, write('Brown place your barragoon piece'), nl) ; (P == 1, P1 is 2, nl, nl, write('White place your barragoon piece'), nl)),
-    (((AiLevel == 1 ; AiLevel == 2), getRandomBarragoonPiece(NewBoard, Line2, Column2, BarragoonFace2));
-    (AiLevel == 3, getValuedValidMoves(NewBoard, ValidMoves2, P1), getBarragoonPieceSmartBot(NewBoard, ValidMoves2, Line2, Column2, BarragoonFace2))),
-      nl, write('Column of the place for the barragoon: '), write(Column2), nl,
-      write('Line of the place for the barragoon: '), write(Line2), nl, nl,
-      write('Press any key to continue: '), getChar(_), nl,
+  nl, write('Column of the place for the barragoon: '), write(Column), nl,
+  write('Line of the place for the barragoon: '), write(Line), nl, nl,
+  write('Press any key to continue: '), getChar(_), nl,
+  addMadeMove(3, _, _, _, Line, Column, BarragoonFace),
+  updateBoard(Line, Column, BarragoonFace, Board, NewBoard),
+  printBoard(NewBoard), !.
 
-    updateBoard(Line2, Column2, BarragoonFace2, NewBoard, NewBoard2).
+% Predicate that is called when the Mode is 1 (Player vs Player).
+% It calls the predicate captureOponentPieceAux with Mode 1.
+
+captureOponentPiece(Board, NewBoard2, 1, _, _):-
+  player(P), ((P == 1, P1 is 2) ; (P == 2, P1 is 1)),
+  repeat,
+    captureOponentPieceAux(P, Board, NewBoard, _, _, 1),
+  !, verifyEndGame(NewBoard),
+  repeat,
+    captureOponentPieceAux(P1, NewBoard, NewBoard2, _, _, 1),
+  !.
+
+% Predicate that is called when the Mode is 2 (Player vs CPU).
+% It calls the predicate captureOponentPieceAux with Mode 2.
+
+captureOponentPiece(Board, NewBoard2, 2, AiLevel, _):-
+  player(P), ((P == 1, P1 is 2) ; (P == 2, P1 is 1)),
+  repeat,
+    captureOponentPieceAux(P, Board, NewBoard, AiLevel, _, 2),
+  !, verifyEndGame(NewBoard),
+  repeat,
+    captureOponentPieceAux(P1, NewBoard, NewBoard2, AiLevel, _, 2),
+  !.
+
+% Predicate that is called when the Mode is 3 (CPU vs CPU).
+% It calls the predicate captureOponentPieceAux with Mode 3.
+
+captureOponentPiece(Board, NewBoard2, 3, AiLevel, AiSecondLevel):-
+    player(P), ((P == 1, P1 is 2) ; (P == 2, P1 is 1)),
+    captureOponentPieceAux(P, Board, NewBoard, AiLevel, AiSecondLevel, 3),
+    !, verifyEndGame(NewBoard),
+    captureOponentPieceAux(P1, NewBoard, NewBoard2, AiLevel, AiSecondLevel, 3).
+
 
 % Predicate that gets a random place and face for the Barragoon.
 % It first makes a list with all the free places in the board.
@@ -532,8 +596,8 @@ getBarragoonPieceSmartBot(Board, OpponnentMoves, Line, Column, Piece):-
 % Predicate that shows in the screen whose turn is it.
 
 tellPlayerToPlay(_):-
-  ((player(P), P == 1, write('White turn!')) ;
-   (player(P), P == 2, write('Brown turn!'))), nl, nl.
+  ((player(P), P == 1, nl, write('White turn!')) ;
+   (player(P), P == 2, nl, write('Brown turn!'))), nl, nl.
 
 % Predicate that asks the player for the coordinates of the piece to move.
 
@@ -882,8 +946,8 @@ verifyPieceInTheWayNoMessages(Line, Column, NewLine, NewColumn, Board):-
 % Predicate that uses the setof predicate to get a list of the valid moves for the given player.
 
 getValidMoves(Board, ValidMoves, Player) :-
-    (setof([[NewLine, NewCol], [PieceLine, PieceCol]],(getPlayerPieces(Board, Player, PieceCol, PieceLine),
-    validateMoveNoMessages(Board, PieceLine, PieceCol, NewLine, NewCol, Player)), ValidMoves) ; true).
+    setof([[NewLine, NewCol], [PieceLine, PieceCol]],(getPlayerPieces(Board, Player, PieceCol, PieceLine),
+    validateMoveNoMessages(Board, PieceLine, PieceCol, NewLine, NewCol, Player)), ValidMoves).
 
 % Predicate that uses the setof predicate to get the valid moves for the given player.
 % It also sets a value to each valid move accordingly.
@@ -929,28 +993,23 @@ getValuedValidMoves(Board, ValidMoves, Player):-
     nth1(1, BestPlMove, BestPlMoveCoords),
     nth1(1, BestPlMoveCoords, ValuePlMove),
 
-    ((ValueOpMove > 1,
-    ValueOpMove > ValuePlMove,
-    nth1(2, BestOpMoveCoords, PieceLine),
-    nth1(3, BestOpMoveCoords, PieceCol),
+     ((ValueOpMove > 1,
+     ValueOpMove > ValuePlMove,
+     nth1(2, BestOpMoveCoords, PieceLine),
+     nth1(3, BestOpMoveCoords, PieceCol),
 
-    nth1(2, BestOpMove, BestOpMovePieceCoords),
-    nth1(1, BestOpMovePieceCoords, OpPieceLine),
-    nth1(2, BestOpMovePieceCoords, OpPieceCol),
+     getValidMoves(Board, OpBestPieceMoves, P1),
+     length(OpBestPieceMoves, NumOpBestPieceMoves),
 
-    setof([[NewLine, NewCol], [OpPieceLine, OpPieceCol]],
-    (validateMoveNoMessages(Board, OpPieceLine, OpPieceCol, NewLine, NewCol, P1)), OpBestPieceMoves),
-    length(OpBestPieceMoves, NumOpBestPieceMoves),
+     setof([[Value, NewLine, NewCol], [PieceLine, PieceCol]],
+     (validateMoveNoMessages(Board, PieceLine, PieceCol, NewLine, NewCol, Player),
+     checkElemNotInList(Board, NewLine, NewCol, OpBestPieceMoves, NumOpBestPieceMoves),
+     setMoveValue(Board, NewLine, NewCol, Value)),
+     ValidMoves),
 
-    setof([[Value, NewLine, NewCol], [PieceLine, PieceCol]],
-    (validateMoveNoMessages(Board, PieceLine, PieceCol, NewLine, NewCol, Player),
-    checkElemNotInList(Board, NewLine, NewCol, OpBestPieceMoves, NumOpBestPieceMoves),
-    setMoveValue(Board, NewLine, NewCol, Value)),
-    ValidMoves),
-
-    length(ValidMoves, NumValidMoves),
-    (NumValidMoves > 0)) ;
-    (ValidMoves = PlayerMoves)))).
+     length(ValidMoves, NumValidMoves),
+     (NumValidMoves > 0)) ;
+     (ValidMoves = PlayerMoves)))).
 
 checkElemNotInList(_Board, _NewLine, _NewCol, _List, 0).
 
@@ -970,7 +1029,7 @@ checkElemNotInList(Board, NewLine, NewCol, List, N):-
 % Predicate that checks if a given destination is present in the oponnent valid moves list.
 
 checkMoveForInCheckPlace(Board, Player2, NewLine, NewCol):-
-    getValidMoves(Board, OpponentMoves, Player2),
+    (getValidMoves(Board, OpponentMoves, Player2) ; true),
     length(OpponentMoves, NumOpMoves),
     !,
     checkElemNotInList(Board, NewLine, NewCol, OpponentMoves, NumOpMoves).
