@@ -7,11 +7,12 @@ initialBoard([
 
 % Prints the board
 
-printBoard(Board) :-
-printBlackLine(4),
-printWhiteLine(4),
-printRowByRow(Board),
-printBlackLine(4).
+printBoard([Line|Rest]) :-
+length(Line, Cols),
+printBlackLine(Cols),
+printWhiteLine(Cols),
+printRowByRow([Line|Rest]),
+printBlackLine(Cols).
 
 
 printBlackLine(Cols) :-
@@ -55,7 +56,8 @@ write('|  '),
 printSingleRowFourth(Line),
 write('|  '),
 printSingleRowFifth(Line),
-printWhiteLine(4),
+length(Line, Cols),
+printWhiteLine(Cols),
 printRowByRow(Rest).
 
 printSingleRowFirst([Cell]):-
