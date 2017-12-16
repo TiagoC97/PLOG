@@ -5,6 +5,11 @@ initialBoard([
 [@, @, 2, @],
 [6, 4, 1, 7]]).
 
+emptyBoard([
+[@, 0, 0, @],
+[@, @, 0, @],
+[0, 0, 0, 0]]).
+
 % Prints the board
 
 printBoard([Line|Rest]) :-

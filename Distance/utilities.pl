@@ -21,3 +21,27 @@ getChar(C):- get_char(C), char_code(C, C1), ite(C1 == 10, !, waitNewLine).
 
 ite(If, Then, _Else):- If, !, Then.
 ite(_, _, Else):- Else.
+
+isBlank(Board, Line, Col) :-
+nth1(Line, Board, BoardLine),
+nth1(Col, BoardLine, 0).
+
+getBlanks(Board, Blanks) :-
+setof(L-C, isBlank(Board, L, C), Blanks).
+
+calcDist(L1-C1, L2-C2, Dist) :-
+Dist is sqrt(exp(L1-L2, 2) + exp(C1-C2, 2)).
+
+
+updateBoard(1, Column, Number, [FirstLine|OtherLines], [NewFirstLine|OtherLines]):-
+updateBoardOneList(Column, Number, FirstLine, NewFirstLine).
+updateBoard(Line, Column, Number, [FirstLine|OtherLines], [FirstLine|NewOtherLines]):-
+Line > 1,
+NewLine is Line-1,
+updateBoard(NewLine, Column, Number, OtherLines, NewOtherLines).
+
+updateBoardOneList(1, Number, [_|Tail], [Number|Tail]).
+updateBoardOneList(Column, Number, [Head|Tail], [Head|NewTail]):-
+Column > 1,
+NewColumn is Column-1,
+updateBoardOneList(NewColumn, Number, Tail, NewTail).

@@ -1,5 +1,6 @@
 :- include('board.pl').
 :- include('utilities.pl').
+:- include('logic.pl').
 
 distance :- showMainMenu.
 
