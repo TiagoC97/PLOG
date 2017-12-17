@@ -10,7 +10,29 @@ domain(Numbers, 1, NumBlanks),
 all_distinct(Numbers),
 constrainDistances(Blanks, NumBlanks, Numbers),
 labeling(ff, Numbers),
-write(Numbers).
+fillBoard(Numbers, Blanks, EmptyBoard, SolvedBoard, NumBlanks).
+
+fillBoard(_Numbers, _Blanks, Board, _NewBoard, 0) :-
+printBoard(Board).
+
+fillBoard(Numbers, Blanks, Board, NewBoard, Index) :-
+nth1(Index, Numbers, CoordsIndex),
+nth1(CoordsIndex, Blanks, Line-Column),
+updateBoard(Line, Column, Index, Board, NewBoard),
+Index1 is Index-1,
+fillBoard(Numbers, Blanks, NewBoard, NewBoard1, Index1).
+
+
+displayAux(_Numbers, _Blanks, 8).
+
+displayAux(Numbers, Blanks, N) :-
+nth1(N, Numbers, CoordsIndex),
+nth1(CoordsIndex, Blanks, Coords),
+write(Coords),
+write(', '),
+N1 is N+1,
+displayAux(Numbers, Blanks, N1).
+
 
 
 constrainDistances(Blanks, NumBlanks, Numbers) :-
