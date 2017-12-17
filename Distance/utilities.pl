@@ -30,7 +30,8 @@ getBlanks(Board, Blanks) :-
 setof(L-C, isBlank(Board, L, C), Blanks).
 
 calcDist(L1-C1, L2-C2, Dist) :-
-Dist is integer(exp(L1-L2, 2) + exp(C1-C2, 2)).
+Dist #= (L1-L2) * (L1-L2) + (C1-C2) * (C1-C2).
+%Dist #= integer(exp(L1-L2, 2) + exp(C1-C2, 2)).
 
 
 updateBoard(1, Column, Number, [FirstLine|OtherLines], [NewFirstLine|OtherLines]):-

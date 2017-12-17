@@ -10,6 +10,15 @@ emptyBoard([
 [@, @, 0, @],
 [0, 0, 0, 0]]).
 
+emptyBoardRip([
+[0, 0],
+[0, 0]]).
+
+emptyBoardBig([
+[@, @, @, @, 0, 0, 0, 0],
+[0, @, 0, @, 0, @, 0, 0],
+[0, 0, 0, 0, 0, 0, 0, 0]]).
+
 % Prints the board
 
 printBoard([Line|Rest]) :-
@@ -136,8 +145,8 @@ write('       ').
 translateCellThird(Cell) :-
 write('| '),
 ((Cell < 10, write('00'));
-(Cell > 10, Cell < 100, write('0'));
-(Cell > 100)),
+(Cell >= 10, Cell < 100, write('0'));
+(Cell >= 100)),
 write(Cell),
 write(' |').
 
