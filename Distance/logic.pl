@@ -13,8 +13,7 @@ domain(Numbers, 1, NumBlanks),
 all_distinct(Numbers),
 constrainDistances(Blanks, NumBlanks, Numbers),
 labeling(ff, Numbers),
-fillBoard(Numbers, Blanks, EmptyBoard, SolvedBoard, NumBlanks),
-printBoard(SolvedBoard).
+fillBoard(Numbers, Blanks, EmptyBoard, SolvedBoard, NumBlanks).
 
 fillBoard(Numbers, Blanks, Board, NewBoard, 1):-
 nth1(Index, Numbers, CoordsIndex),
