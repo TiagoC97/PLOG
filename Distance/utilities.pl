@@ -1,6 +1,3 @@
-:- use_module(library(lists)).
-:- use_module(library(random)).
-
 % Function used to clear screen
 cls :- write('\e[2J').
 
@@ -29,10 +26,13 @@ nth1(Col, BoardLine, 0).
 getBlanks(Board, Blanks) :-
 setof(L-C, isBlank(Board, L, C), Blanks).
 
+% Function used to calculate the square distance between to points in a 2D board
+
 calcDist(L1-C1, L2-C2, Dist) :-
 Dist #= (L1-L2) * (L1-L2) + (C1-C2) * (C1-C2).
 %Dist #= integer(exp(L1-L2, 2) + exp(C1-C2, 2)).
 
+% Functions used to update the puzzle board. Putting a given number in a given place
 
 updateBoard(1, Column, Number, [FirstLine|OtherLines], [NewFirstLine|OtherLines]):-
 updateBoardOneList(Column, Number, FirstLine, NewFirstLine).

@@ -1,3 +1,8 @@
+:- use_module(library(lists)).
+:- use_module(library(random)).
+:- use_module(library(clpfd)).
+:- use_module(library(sets)).
+
 :- include('board.pl').
 :- include('utilities.pl').
 :- include('logic.pl').

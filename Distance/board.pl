@@ -1,33 +1,32 @@
 % Creates the initial board
 
-initialBoard([
-[@, 3, 5, @],
-[@, @, 2, @],
-[6, 4, 1, 7]]).
-
-emptyBoard6([
+%7
+emptyBoardSmall([
 [@, 0, 0, @],
 [@, @, 0, @],
 [0, 0, 0, 0]]).
 
-emptyBoardRip([
-[0, 0],
-[0, 0]]).
+%12
+emptyBoardMedium([
+[@, @, @, @, 0],
+[0, 0, @, 0, 0],
+[0, @, 0, @, 0],
+[@, @, 0, @, 0],
+[0, 0, @, @, @]]).
 
-emptyBoard17([
+%17
+emptyBoardBig([
 [@, @, @, @, 0, 0, 0, 0],
 [0, @, 0, @, 0, @, 0, 0],
 [0, 0, 0, 0, 0, 0, 0, 0]]).
 
 % Prints the board
-
 printBoard([Line|Rest]) :-
 length(Line, Cols),
 printBlackLine(Cols),
 printWhiteLine(Cols),
 printRowByRow([Line|Rest]),
 printBlackLine(Cols).
-
 
 printBlackLine(Cols) :-
 write('+--'),
@@ -38,6 +37,7 @@ nl.
 printBlackLineAux(0).
 
 printBlackLineAux(Cols) :-
+Cols > 0,
 write('---------'),
 Cols1 is Cols - 1,
 printBlackLineAux(Cols1).
@@ -52,11 +52,10 @@ nl.
 printWhiteLineAux(0).
 
 printWhiteLineAux(Cols) :-
+Cols > 0,
 write('         '),
 Cols1 is Cols - 1,
 printWhiteLineAux(Cols1).
-
-
 
 printRowByRow([]).
 printRowByRow([Line|Rest]) :-
@@ -124,20 +123,17 @@ translateCellFifth(Cell),
 write('  '),
 printSingleRowFifth(More).
 
-
 translateCellFirst(@) :-
 write('       ').
 
 translateCellFirst(_) :-
 write('+-----+').
 
-
 translateCellSecond(@) :-
 write('       ').
 
 translateCellSecond(_) :-
 write('|     |').
-
 
 translateCellThird(@) :-
 write('       ').
@@ -150,14 +146,11 @@ write('| '),
 write(Cell),
 write(' |').
 
-
 translateCellFourth(@) :-
 write('       ').
 
 translateCellFourth(_) :-
 write('|     |').
-
-
 
 translateCellFifth(@) :-
 write('       ').
