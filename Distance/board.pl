@@ -1,5 +1,3 @@
-% Creates the initial board
-
 %7
 emptyBoardSmall([
 [@, 0, 0, @],

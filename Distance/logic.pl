@@ -7,9 +7,8 @@ length(Numbers, NumBlanks),
 domain(Numbers, 1, NumBlanks),
 all_distinct(Numbers),
 constrainDistances(Blanks, NumBlanks, Numbers),
-labeling(ff, Numbers),
-fillBoard(Numbers, Blanks, EmptyBoard, SolvedBoard, NumBlanks),
-printBoard(SolvedBoard).
+labeling([], Numbers),
+fillBoard(Numbers, Blanks, EmptyBoard, SolvedBoard, NumBlanks).
 
 % Receives a list of numbers and a list of the blank coords
 % Updates the board accordingly
@@ -59,8 +58,7 @@ domain(Cols, 1, MaxLen),
 constrainGenerator(NumBlanks, Lines, Cols),
 labeling([value(getBoard(MaxLen))], Lines),
 labeling([value(getBoard(MaxLen))], Cols),
-generateBoard(Lines, Cols, NumBlanks, Board, SolvedBoard),
-printBoard(SolvedBoard).
+generateBoard(Lines, Cols, NumBlanks, Board, SolvedBoard).
 
 % Generates random coords in order to generate different boards everytime
 getBoard(MaxLen, Var, _Rest, BB, BB0) :-
