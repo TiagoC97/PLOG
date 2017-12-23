@@ -7,9 +7,10 @@
 :- include('utilities.pl').
 :- include('logic.pl').
 
+% Predicate that is called to initiate the menu.
 distance :- showMainMenu.
-
-showMainMenu:- nl,nl,nl,nl,
+% Predicate that shows the main menu
+showMainMenu:- nl,nl,
 write('##############################################'),nl,
 write('################## DISTANCE ##################'),nl,
 write('##############################################'),nl,
@@ -25,8 +26,8 @@ main_menu_option(Op):- (Op < 1 ; Op > 3), nl, nl, write('WARNING!!! Please inser
 main_menu_option(1):- showSolverMenu.
 main_menu_option(2):- generatorMenu.
 main_menu_option(3).
-
-showSolverMenu:- nl,nl,nl,nl,
+% Predicate that shows the solver menu
+showSolverMenu:- nl,nl,
 write('##############################################'),nl,
 write('################### SOLVER ###################'),nl,
 write('##############################################'),nl,
@@ -44,12 +45,13 @@ solver_menu_option(1):- emptyBoardSmall(Board), solver(Board, SolvedBoard), prin
 solver_menu_option(2):- emptyBoardMedium(Board), solver(Board, SolvedBoard), printBoard(SolvedBoard), showMainMenu.  % Opens the menu for the mode choice
 solver_menu_option(3):- emptyBoardBig(Board), solver(Board, SolvedBoard), printBoard(SolvedBoard), showMainMenu.  % Opens the menu for the mode choice
 solver_menu_option(4):- showMainMenu.  % Opens the menu for the mode choice
-
+% Predicate that gets the number of blank spaces and
+% generates a board and gets its solution. Finnally it calls the menu of the generator.
 generatorMenu:-
   write('Please give the number (two digits) of blank spaces (>= 3) for the new puzzle: '),
   getDoubleDigit(NumBlanks),
   (((NumBlanks > 2, NumBlanks < 100), generator(NumBlanks, Board, SolvedBoard), showGeneratorMenu(Board, SolvedBoard)) ; write('Number of blank spaces must be >= 3!'), nl, nl, generatorMenu).
-
+% Predicate that shows the generator menu
 showGeneratorMenu(Board, SolvedBoard):-
 nl,nl,nl,nl,
 write('##############################################'),nl,
@@ -68,7 +70,7 @@ generator_menu_option(1, Board, SolvedBoard):- printBoard(Board), showGeneratorM
 generator_menu_option(2, Board, SolvedBoard):- printBoard(SolvedBoard), showGeneratorMenu(Board, SolvedBoard).  % Opens the menu for the mode choice
 generator_menu_option(3, _, _):- showMainMenu.
 
-
+% Precdicate that gets the user option for menu
 menu_option(MenuType, Board, SolvedBoard):-  write('Please insert your choice:'), nl,
 getDigit(Op),
 (
